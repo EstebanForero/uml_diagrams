@@ -1,0 +1,16 @@
+@startuml
+title Actor: Admin
+start
+:Seleccionar "Cambiar rol de usuario";
+:Buscar usuario;
+:Seleccionar usuario;
+:Elegir nuevo rol;
+:Confirmar cambio de rol;
+if (¿Cambio de rol válido?) then (Sí)
+  :Actualizar rol del usuario;
+  :Mostrar éxito;
+else (No)
+  :Mostrar error;
+endif
+stop
+@enduml

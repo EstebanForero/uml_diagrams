@@ -1,0 +1,8 @@
+@startuml
+title Actores: Admin y Entrenador
+start
+:Seleccionar "Ver todos los entrenamientos";
+:Obtener todos los entrenamientos;
+:Mostrar lista de entrenamientos;
+stop
+@enduml

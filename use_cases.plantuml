@@ -1,0 +1,212 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+' Actors
+actor "Usuario" as actorUsuario #CCFFCC
+actor "Admin" as actorAdmin #FFCCCC
+actor "Entrenador" as actorEntrenador #CCCCFF
+
+' Capa 1: Casos de Uso Principales
+package "Capa 1: Casos de Uso Principales" as capa1 {
+
+  ' Usuario-specific use cases (green)
+  usecase "Ver mi reporte" as UC_VerMiReporte #CCFFCC
+  usecase "Gestión matrícula" as UC_GestionMatricula #CCFFCC
+  usecase "Ver información torneos de usuario" as UC_VerInfoTorneosUsuario #CCFFCC
+  usecase "Ver información entrenamientos usuario" as UC_VerInfoEntrenamientosUsuario #CCFFCC
+  usecase "Solicitud actualización información" as UC_SolicitudActualizarInfo #CCFFCC
+
+  ' Admin-specific use cases (red)
+  usecase "Gestión torneos" as UC_GestionTorneos #FFCCCC
+  usecase "Ejecutar solicitudes" as UC_EjecutarSolicitudes #FFCCCC
+  usecase "Cambiar rol de usuarios" as UC_CambiarRol #FFCCCC
+  usecase "Actualizar información usuarios" as UC_ActualizarUsuarios #FFCCCC
+  usecase "Gestión categorías" as UC_GestionCategorias #FFCCCC
+  usecase "Gestión entrenamientos" as UC_GestionEntrenamientos #FFCCCC
+
+  ' Entrenador-specific use cases (blue)
+  usecase "Crear entrenamientos" as UC_CrearEntrenamientos #CCCCFF
+  usecase "Crear torneos" as UC_CrearTorneos #CCCCFF
+  usecase "Enviar solicitud de registro de usuario" as UC_SolicitudRegistroUsuario #CCCCFF
+  usecase "Enviar solicitud" as UC_EnviarSolicitud #CCCCFF
+
+  ' Shared use cases for all (pink)
+  usecase "Iniciar sesión en el sistema" as UC_Login #FF99CC
+  usecase "Registrarse en el sistema" as UC_Registro #FF99CC
+
+  ' Shared use cases for Admin/Entrenador (light purple)
+  usecase "Ver todos los entrenamientos" as UC_VerTodosEntrenamientos #CC99FF
+  usecase "Ver todos los torneos" as UC_VerTodosTorneos #CC99FF
+  usecase "Ver todos los usuarios" as UC_VerTodosUsuarios #CC99FF
+  usecase "Ver reporte de usuario específico" as UC_VerReporteUsuarioEspecifico #CC99FF
+}
+
+' Capa 2: Suministro de Datos
+package "Capa 2" as capa2 {
+
+  ' Usuario-specific (green)
+  usecase "Suministrar datos de pago de matrícula" as UC_SuministrarPagoMatricula #CCFFCC
+  usecase "Suministrar datos de torneos de usuario" as UC_SuministrarInfoTorneosUsuario #CCFFCC
+  usecase "Suministrar datos de entrenamientos de usuario" as UC_SuministrarInfoEntrenamientosUsuario #CCFFCC
+  usecase "Suministrar datos para la solicitud de actualización" as UC_SuministrarSolicitudActualizarInfo #CCFFCC
+
+  ' Admin-specific (red)
+  usecase "Suministrar datos de torneos" as UC_SuministrarDatosTorneos #FFCCCC
+  usecase "Suministrar datos de solicitudes" as UC_SuministrarSolicitudes #FFCCCC
+  usecase "Suministrar datos de rol" as UC_SuministrarDatosRol #FFCCCC
+  usecase "Suministrar datos de usuarios" as UC_SuministrarDatosUsuarios #FFCCCC
+  usecase "Suministrar datos de categorías" as UC_SuministrarDatosCategorias #FFCCCC
+  usecase "Suministrar datos de entrenamientos" as UC_SuministrarDatosEntrenamientos #FFCCCC
+
+  ' Entrenador-specific (blue)
+  usecase "Suministrar datos de entrenamientos" as UC_SuministrarDatosEntrenamientosEntrenador #CCCCFF
+  usecase "Suministrar datos de torneos" as UC_SuministrarDatosTorneosEntrenador #CCCCFF
+  usecase "Suministrar datos de solicitud de registro" as UC_SuministrarSolicitudRegistroUsuario #CCCCFF
+  usecase "Suministrar datos de solicitud" as UC_SuministrarDatosSolicitud #CCCCFF
+
+  ' Shared for all (pink)
+  usecase "Suministrar datos de login" as UC_SuministrarLogin #FF99CC
+  usecase "Suministrar datos de registro" as UC_SuministrarRegistro #FF99CC
+
+  ' Shared for Admin/Entrenador (light purple)
+  usecase "Suministrar datos de entrenamientos compartidos" as UC_SuministrarDatosEntrenamientosShared #CC99FF
+  usecase "Suministrar datos de torneos compartidos" as UC_SuministrarDatosTorneosShared #CC99FF
+  usecase "Suministrar datos de usuarios" as UC_SuministrarDatosUsuariosShared #CC99FF
+  usecase "Suministrar datos de reporte de usuario" as UC_SuministrarReporteUsuario #CC99FF
+}
+
+' Capa 3: Validación
+package "Capa 3" as capa3 {
+
+  ' Usuario-specific (green)
+  usecase "Validar pago de matrícula" as UC_ValidarPagoMatricula #CCFFCC
+  usecase "Validar datos de torneos de usuario" as UC_ValidarInfoTorneosUsuario #CCFFCC
+  usecase "Validar datos de entrenamientos de usuario" as UC_ValidarInfoEntrenamientosUsuario #CCFFCC
+  usecase "Verificar datos para solicitud de actualización" as UC_VerificarSolicitudActualizarInfo #CCFFCC
+
+  ' Admin-specific (red)
+  usecase "Validar datos de torneos" as UC_ValidarDatosTorneos #FFCCCC
+  usecase "Validar solicitud" as UC_ValidarSolicitudes #FFCCCC
+  usecase "Validar datos de rol" as UC_ValidarDatosRol #FFCCCC
+  usecase "Validar datos de usuarios" as UC_ValidarDatosUsuarios #FFCCCC
+  usecase "Validar datos de categorías" as UC_ValidarDatosCategorias #FFCCCC
+  usecase "Validar datos de entrenamientos" as UC_ValidarDatosEntrenamientos #FFCCCC
+
+  ' Entrenador-specific (blue)
+  usecase "Validar datos de entrenamientos" as UC_ValidarDatosEntrenamientosEntrenador #CCCCFF
+  usecase "Validar datos de torneos" as UC_ValidarDatosTorneosEntrenador #CCCCFF
+  usecase "Validar datos de solicitud de registro" as UC_ValidarSolicitudRegistroUsuario #CCCCFF
+  usecase "Validar datos de solicitud" as UC_ValidarDatosSolicitud #CCCCFF
+
+  ' Shared for all (pink)
+  usecase "Validar datos de login" as UC_ValidarLogin #FF99CC
+  usecase "Validar datos de registro" as UC_ValidarRegistro #FF99CC
+
+  ' Shared for Admin/Entrenador (light purple)
+  usecase "Validar datos de entrenamientos compartidos" as UC_ValidarDatosEntrenamientosShared #CC99FF
+  usecase "Validar datos de torneos compartidos" as UC_ValidarDatosTorneosShared #CC99FF
+  usecase "Validar datos de usuarios" as UC_ValidarDatosUsuariosShared #CC99FF
+  usecase "Validar datos de reporte de usuario" as UC_ValidarReporteUsuario #CC99FF
+}
+
+' Connections from Capa 1 to Capa 2
+' Usuario
+UC_VerMiReporte --> UC_SuministrarPagoMatricula
+UC_GestionMatricula --> UC_SuministrarPagoMatricula
+UC_VerInfoTorneosUsuario --> UC_SuministrarInfoTorneosUsuario
+UC_VerInfoEntrenamientosUsuario --> UC_SuministrarInfoEntrenamientosUsuario
+UC_SolicitudActualizarInfo --> UC_SuministrarSolicitudActualizarInfo
+
+' Admin
+UC_GestionTorneos --> UC_SuministrarDatosTorneos
+UC_EjecutarSolicitudes --> UC_SuministrarSolicitudes
+UC_CambiarRol --> UC_SuministrarDatosRol
+UC_ActualizarUsuarios --> UC_SuministrarDatosUsuarios
+UC_GestionCategorias --> UC_SuministrarDatosCategorias
+UC_GestionEntrenamientos --> UC_SuministrarDatosEntrenamientos
+
+' Entrenador
+UC_CrearEntrenamientos --> UC_SuministrarDatosEntrenamientosEntrenador
+UC_CrearTorneos --> UC_SuministrarDatosTorneosEntrenador
+UC_SolicitudRegistroUsuario --> UC_SuministrarSolicitudRegistroUsuario
+UC_EnviarSolicitud --> UC_SuministrarDatosSolicitud
+
+' Shared for all (pink)
+UC_Login --> UC_SuministrarLogin
+UC_Registro --> UC_SuministrarRegistro
+
+' Shared for Admin/Entrenador (light purple)
+UC_VerTodosEntrenamientos --> UC_SuministrarDatosEntrenamientosShared
+UC_VerTodosTorneos --> UC_SuministrarDatosTorneosShared
+UC_VerTodosUsuarios --> UC_SuministrarDatosUsuariosShared
+UC_VerReporteUsuarioEspecifico --> UC_SuministrarReporteUsuario
+
+' Connections from Capa 2 to Capa 3
+' Usuario
+UC_SuministrarPagoMatricula --> UC_ValidarPagoMatricula
+UC_SuministrarInfoTorneosUsuario --> UC_ValidarInfoTorneosUsuario
+UC_SuministrarInfoEntrenamientosUsuario --> UC_ValidarInfoEntrenamientosUsuario
+UC_SuministrarSolicitudActualizarInfo --> UC_VerificarSolicitudActualizarInfo
+
+' Admin
+UC_SuministrarDatosTorneos --> UC_ValidarDatosTorneos
+UC_SuministrarSolicitudes --> UC_ValidarSolicitudes
+UC_SuministrarDatosRol --> UC_ValidarDatosRol
+UC_SuministrarDatosUsuarios --> UC_ValidarDatosUsuarios
+UC_SuministrarDatosCategorias --> UC_ValidarDatosCategorias
+UC_SuministrarDatosEntrenamientos --> UC_ValidarDatosEntrenamientos
+
+' Entrenador
+UC_SuministrarDatosEntrenamientosEntrenador --> UC_ValidarDatosEntrenamientosEntrenador
+UC_SuministrarDatosTorneosEntrenador --> UC_ValidarDatosTorneosEntrenador
+UC_SuministrarSolicitudRegistroUsuario --> UC_ValidarSolicitudRegistroUsuario
+UC_SuministrarDatosSolicitud --> UC_ValidarDatosSolicitud
+
+' Shared for all (pink)
+UC_SuministrarLogin --> UC_ValidarLogin
+UC_SuministrarRegistro --> UC_ValidarRegistro
+
+' Shared for Admin/Entrenador (light purple)
+UC_SuministrarDatosEntrenamientosShared --> UC_ValidarDatosEntrenamientosShared
+UC_SuministrarDatosTorneosShared --> UC_ValidarDatosTorneosShared
+UC_SuministrarDatosUsuariosShared --> UC_ValidarDatosUsuariosShared
+UC_SuministrarReporteUsuario --> UC_ValidarReporteUsuario
+
+' Actor Connections to Capa 1
+' Usuario
+actorUsuario --> UC_VerMiReporte
+actorUsuario --> UC_GestionMatricula
+actorUsuario --> UC_VerInfoTorneosUsuario
+actorUsuario --> UC_VerInfoEntrenamientosUsuario
+actorUsuario --> UC_SolicitudActualizarInfo
+actorUsuario --> UC_Login
+actorUsuario --> UC_Registro
+
+' Admin
+actorAdmin --> UC_GestionTorneos
+actorAdmin --> UC_EjecutarSolicitudes
+actorAdmin --> UC_CambiarRol
+actorAdmin --> UC_ActualizarUsuarios
+actorAdmin --> UC_GestionCategorias
+actorAdmin --> UC_GestionEntrenamientos
+actorAdmin --> UC_Login
+actorAdmin --> UC_Registro
+actorAdmin --> UC_VerTodosEntrenamientos
+actorAdmin --> UC_VerTodosTorneos
+actorAdmin --> UC_VerTodosUsuarios
+actorAdmin --> UC_VerReporteUsuarioEspecifico
+
+' Entrenador
+actorEntrenador --> UC_CrearEntrenamientos
+actorEntrenador --> UC_CrearTorneos
+actorEntrenador --> UC_SolicitudRegistroUsuario
+actorEntrenador --> UC_EnviarSolicitud
+actorEntrenador --> UC_Login
+actorEntrenador --> UC_Registro
+actorEntrenador --> UC_VerTodosEntrenamientos
+actorEntrenador --> UC_VerTodosTorneos
+actorEntrenador --> UC_VerTodosUsuarios
+actorEntrenador --> UC_VerReporteUsuarioEspecifico
+
+@enduml

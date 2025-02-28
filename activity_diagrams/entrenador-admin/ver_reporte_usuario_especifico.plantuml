@@ -1,0 +1,10 @@
+@startuml
+title Actores: Admin y Entrenador
+start
+:Seleccionar "Ver reporte de usuario";
+:seleccionar usuario;
+:Enviar solicitud;
+:Obtener reporte del usuario;
+:Mostrar reporte;
+stop
+@enduml

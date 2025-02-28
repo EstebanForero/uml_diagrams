@@ -1,0 +1,14 @@
+@startuml
+title Actores: Todos (Usuario, Admin, Entrenador)
+start
+:Acceder a la página de inicio de sesión;
+:Ingresar nombre de usuario y contraseña;
+:Enviar inicio de sesión;
+if (¿Credenciales válidas?) then (Sí)
+  :Autenticar usuario;
+  :Redirigir al panel principal;
+else (No)
+  :Mostrar error;
+endif
+stop
+@enduml

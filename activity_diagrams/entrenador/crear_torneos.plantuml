@@ -1,0 +1,14 @@
+@startuml
+title Actor: Entrenador
+start
+:Seleccionar "Crear torneo";
+:Ingresar detalles del torneo;
+:Enviar torneo;
+if (¿Datos válidos?) then (Sí)
+  :Guardar torneo;
+  :Mostrar confirmación;
+else (No)
+  :Mostrar error;
+endif
+stop
+@enduml

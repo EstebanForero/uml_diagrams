@@ -1,0 +1,8 @@
+@startuml
+title Actores: Admin y Entrenador
+start
+:Seleccionar "Ver todos los torneos";
+:Obtener todos los torneos;
+:Mostrar lista de torneos;
+stop
+@enduml

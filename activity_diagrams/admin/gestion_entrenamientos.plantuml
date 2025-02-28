@@ -1,0 +1,24 @@
+@startuml
+title Actor: Admin
+start
+:Seleccionar "Gestionar entrenamientos";
+:Elegir acción (Crear/Editar/Eliminar);
+if (Acción == Crear) then
+  :Ingresar detalles del entrenamiento;
+  :Enviar nuevo entrenamiento;
+elseif (Acción == Editar) then
+  :Seleccionar entrenamiento a editar;
+  :Actualizar detalles del entrenamiento;
+  :Guardar cambios;
+elseif (Acción == Eliminar) then
+  :Seleccionar entrenamiento a eliminar;
+  :Confirmar eliminación;
+endif
+if (¿Datos válidos?) then (Sí)
+  :Actualizar registros del sistema;
+  :Mostrar éxito;
+else (No)
+  :Mostrar error;
+endif
+stop
+@enduml
