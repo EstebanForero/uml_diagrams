@@ -1,0 +1,310 @@
+@startuml
+
+' Define namespaces
+package "Entities" {
+    class Category {
+        +Uuid id_category
+        +String name
+        +i32 min_age
+        +i32 max_age
+    }
+    class CategoryCreation {
+        +String name
+        +i32 min_age
+        +i32 max_age
+    }
+    class Tournament {
+        +Uuid id_tournament
+        +String name
+        +Uuid id_category
+        +NaiveDateTime start_datetime
+        +NaiveDateTime end_datetime
+    }
+    class TournamentCreation {
+        +String name
+        +Uuid id_category
+        +NaiveDateTime start_datetime
+        +NaiveDateTime end_datetime
+    }
+    class User {
+        +Uuid id_user
+        +String first_name
+        +String last_name
+        +NaiveDate birth_date
+        +NaiveDateTime registration_date
+        +String email
+        +bool email_verified
+        +String phone_number
+        +String country_code
+        +String password
+        +String identification_number
+        +IdType identification_type
+        +URol user_rol
+    }
+    class UserInfo {
+        +Uuid id_user
+        +String first_name
+        +String last_name
+        +NaiveDate birth_date
+        +NaiveDateTime registration_date
+        +String email
+        +bool email_verified
+        +String phone_number
+        +String country_code
+        +String identification_number
+        +IdType identification_type
+        +URol user_rol
+    }
+    class UserCreation {
+        +String first_name
+        +String last_name
+        +NaiveDate birth_date
+        +String email
+        +String phone_number
+        +String country_code
+        +String password
+        +String identification_number
+        +IdType identification_type
+    }
+    class UserLogInInfo {
+        +String identifier
+        +String password
+    }
+    class CategoryRequirement {
+        +Uuid id_category_requirement
+        +Uuid id_category
+        +String requirement_description
+        +LevelName required_level
+    }
+    class UserCategory {
+        +Uuid id_user
+        +Uuid id_category
+        +String user_level
+    }
+    class TournamentRegistration {
+        +Uuid id_tournament
+        +Uuid id_user
+        +NaiveDateTime registration_datetime
+    }
+    class TournamentAttendance {
+        +Uuid id_tournament
+        +Uuid id_user
+        +NaiveDateTime attendance_datetime
+        +i32 position
+    }
+}
+
+package "UseCases" {
+    interface CategoryRepository {
+        +create_category(category: &Category) Result<()>
+        +get_category_by_id(id: Uuid) Result<Option<Category>>
+        +update_category(category: &Category) Result<()>
+        +delete_category(id: Uuid) Result<()>
+        +list_categories() Result<Vec<Category>>
+        +get_category_by_name(name: &str) Result<Option<Category>>
+    }
+    interface CategoryRequirementRepository {
+        +create_category_requirement(requirement: &CategoryRequirement) Result<()>
+        +get_category_requirements(category_id: Uuid) Result<Vec<CategoryRequirement>>
+    }
+    interface UserCategoryRepository {
+        +get_user_category(id_user: Uuid, id_category: Uuid) Result<Option<UserCategory>>
+    }
+    class CategoryService {
+        -category_repo: Arc<dyn CategoryRepository>
+        -requirement_repo: Arc<dyn CategoryRequirementRepository>
+        -user_category_repo: Arc<dyn UserCategoryRepository>
+        +add_category(category: Category) Result<()>
+        +get_category_by_id(id: Uuid) Result<Category>
+        +update_category(category: &Category) Result<()>
+        +delete_category(id: Uuid) Result<()>
+        +get_all_categories() Result<Vec<Category>>
+        +add_category_requirement(category_req: &CategoryRequirement) Result<()>
+        +get_category_requirements(category_id: Uuid) Result<Vec<CategoryRequirement>>
+        +get_user_category(user_id: Uuid, category_id: Uuid) Result<Option<UserCategory>>
+    }
+    interface UserRepository {
+        +create_user(user: &User) Result<()>
+        +get_user_by_id(id: Uuid) Result<Option<User>>
+        +get_user_id_by_email(email: &str) Result<Option<Uuid>>
+        +get_user_id_by_phone(phone_number: &str) Result<Option<Uuid>>
+        +get_user_id_by_identification(identification_number: &str, identification_type: &IdType) Result<Option<Uuid>>
+        +update_user(user: &User) Result<()>
+        +delete_user(id: Uuid) Result<()>
+        +list_users() Result<Vec<User>>
+    }
+    interface PasswordHasher {
+        +hash(content: &str) Result<String>
+        +verify(original: &str, hashed: &str) Result<bool>
+    }
+    class UserService {
+        -user_repo: Arc<dyn UserRepository>
+        -password_hasher: Arc<dyn PasswordHasher>
+        +register_user(user_creation: UserCreation) Result<()>
+        +get_all_users() Result<Vec<UserInfo>>
+        +get_user_by_id(user_id: Uuid) Result<UserInfo>
+        +log_in_user(user_log_in_info: &UserLogInInfo) Result<LogInResponse>
+    }
+    class LogInResponse {
+        +Uuid user_id
+        +URol user_rol
+    }
+    interface TournamentRepository {
+        +create_tournament(tournament: &Tournament) Result<()>
+        +get_tournament_by_id(id: Uuid) Result<Option<Tournament>>
+        +update_tournament(tournament: &Tournament) Result<()>
+        +delete_tournament(id: Uuid) Result<()>
+        +list_tournaments() Result<Vec<Tournament>>
+    }
+    interface TournamentRegistrationRepository {
+        +register_user_for_tournament(registration: &TournamentRegistration) Result<()>
+        +get_tournament_registrations(tournament_id: Uuid) Result<Vec<TournamentRegistration>>
+    }
+    interface TournamentAttendanceRepository {
+        +record_tournament_attendance(attendance: &TournamentAttendance) Result<()>
+        +get_tournament_attendance(tournament_id: Uuid) Result<Vec<TournamentAttendance>>
+        +update_tournament_position(tournament_id: Uuid, user_id: Uuid, position: i32) Result<()>
+    }
+    class TournamentService {
+        -tournament_repo: Arc<dyn TournamentRepository>
+        -registration_repo: Arc<dyn TournamentRegistrationRepository>
+        -attendance_repo: Arc<dyn TournamentAttendanceRepository>
+        +create_tournament(tournament: TournamentCreation) Result<()>
+        +get_tournament(id: Uuid) Result<Tournament>
+        +update_tournament(tournament: Tournament) Result<()>
+        +delete_tournament(id: Uuid) Result<()>
+        +list_tournaments() Result<Vec<Tournament>>
+        +register_user(registration: TournamentRegistration) Result<()>
+        +record_attendance(attendance: TournamentAttendance) Result<()>
+        +update_position(tournament_id: Uuid, user_id: Uuid, position: i32) Result<()>
+    }
+}
+
+package "Repositories" {
+    class TursoDb {
+        -db: Arc<libsql::Database>
+        -conn: Option<Connection>
+        +from(url: &str, token: &str) Result<TursoDb>
+        +get_connection() Result<Connection>
+    }
+}
+
+package "HttpApi" {
+    class CategoryEndpoints {
+        +category_router(category_service: CategoryService) Router
+        +alive() &'static str
+        +create_category(State<CategoryService>, Json<Category>) HttpResult<impl IntoResponse>
+        +get_category(State<CategoryService>, Path<Uuid>) HttpResult<Json<Category>>
+        +update_category(State<CategoryService>, Json<Category>) Result<Json<Category>, Response>
+        +delete_category(State<CategoryService>, Path<Uuid>) Result<Json<String>, Response>
+        +list_categories(State<CategoryService>) Result<Json<Vec<Category>>, Response>
+        +add_requirement(State<CategoryService>, Json<CategoryRequirement>) Result<Json<CategoryRequirement>, Response>
+        +get_requirements(State<CategoryService>, Path<Uuid>) Result<Json<Vec<CategoryRequirement>>, Response>
+        +get_user_category(State<CategoryService>, Path<(Uuid, Uuid)>) Result<Json<Option<UserCategory>>, Response>
+    }
+    class UserEndpoints {
+        +user_router(user_service: UserService, token_key: &str) Router
+        +alive() Result<Json<String>, Response>
+        +register_user(State<(UserService, String)>, Json<UserCreation>) HttpResult<impl IntoResponse>
+        +log_in_user(State<(UserService, String)>, Json<UserLogInInfo>) Result<Json<LogInResponse>, Response>
+        +get_all_users(State<(UserService, String)>) Result<Json<Vec<UserInfo>>, Response>
+        +get_user_by_id(State<(UserService, String)>, Path<Uuid>) Result<Json<UserInfo>, Response>
+    }
+    class TournamentEndpoints {
+        +tournament_router(tournament_service: TournamentService) Router
+        +alive() &'static str
+        +create_tournament(State<TournamentService>, Json<TournamentCreation>) HttpResult<impl IntoResponse>
+        +get_tournament(State<TournamentService>, Path<Uuid>) Result<Json<Tournament>, Response>
+        +update_tournament(State<TournamentService>, Json<Tournament>) Result<(), Response>
+        +delete_tournament(State<TournamentService>, Path<Uuid>) Result<Json<String>, Response>
+        +list_tournaments(State<TournamentService>) Result<Json<Vec<Tournament>>, Response>
+        +register_user(State<TournamentService>, Json<TournamentRegistration>) Result<Json<String>, Response>
+        +record_attendance(State<TournamentService>, Json<TournamentAttendance>) Result<Json<String>, Response>
+        +update_position(State<TournamentService>, Path<(Uuid, Uuid)>, Json<i32>) Result<Json<String>, Response>
+    }
+}
+
+package "Utilities" {
+    class BcryptHasher {
+        +hash(content: &str) Result<String>
+        +verify(original: &str, hashed: &str) Result<bool>
+    }
+}
+
+' Relationships
+' Partial structs dependencies
+CategoryCreation --> Category : used to create
+TournamentCreation --> Tournament : used to create
+UserCreation --> User : used to create
+UserInfo --> User : projected from
+
+' Associations between entities
+Tournament --> Category : id_category
+CategoryRequirement --> Category : id_category
+UserCategory --> User : id_user
+UserCategory --> Category : id_category
+TournamentRegistration --> Tournament : id_tournament
+TournamentRegistration --> User : id_user
+TournamentAttendance --> Tournament : id_tournament
+TournamentAttendance --> User : id_user
+
+' Dependencies for services
+CategoryService --> CategoryRepository : uses
+CategoryService --> CategoryRequirementRepository : uses
+CategoryService --> UserCategoryRepository : uses
+UserService --> UserRepository : uses
+UserService --> PasswordHasher : uses
+TournamentService --> TournamentRepository : uses
+TournamentService --> TournamentRegistrationRepository : uses
+TournamentService --> TournamentAttendanceRepository : uses
+
+' Realization for TursoDb
+TursoDb ..|> CategoryRepository : implements
+TursoDb ..|> CategoryRequirementRepository : implements
+TursoDb ..|> UserCategoryRepository : implements
+TursoDb ..|> UserRepository : implements
+TursoDb ..|> TournamentRepository : implements
+TursoDb ..|> TournamentRegistrationRepository : implements
+TursoDb ..|> TournamentAttendanceRepository : implements
+
+' Dependencies for TursoDb on entities (corrected inaccuracy)
+TursoDb --> Category : uses
+TursoDb --> Tournament : uses
+TursoDb --> User : uses
+TursoDb --> CategoryRequirement : uses
+TursoDb --> UserCategory : uses
+TursoDb --> TournamentRegistration : uses
+TursoDb --> TournamentAttendance : uses
+
+' Dependencies for services on entities
+CategoryService --> Category : uses
+CategoryService --> CategoryRequirement : uses
+CategoryService --> UserCategory : uses
+UserService --> User : uses
+UserService --> UserCreation : uses
+UserService --> UserInfo : uses
+UserService --> UserLogInInfo : uses
+TournamentService --> Tournament : uses
+TournamentService --> TournamentCreation : uses
+TournamentService --> TournamentRegistration : uses
+TournamentService --> TournamentAttendance : uses
+
+' Realization for BcryptHasher
+BcryptHasher ..|> PasswordHasher : implements
+
+' Dependencies for endpoints
+CategoryEndpoints --> CategoryService : uses
+CategoryEndpoints --> Category : uses
+CategoryEndpoints --> CategoryRequirement : uses
+CategoryEndpoints --> UserCategory : uses
+UserEndpoints --> UserService : uses
+UserEndpoints --> UserCreation : uses
+UserEndpoints --> UserLogInInfo : uses
+UserEndpoints --> UserInfo : uses
+TournamentEndpoints --> TournamentService : uses
+TournamentEndpoints --> TournamentCreation : uses
+TournamentEndpoints --> Tournament : uses
+TournamentEndpoints --> TournamentRegistration : uses
+TournamentEndpoints --> TournamentAttendance : uses
+
+@enduml

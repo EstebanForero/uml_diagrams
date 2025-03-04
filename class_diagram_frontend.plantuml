@@ -1,0 +1,197 @@
+@startuml
+ 
+' Entidades del Dominio
+class UserCreationInfo {
+  - nombre: string
+  - contrasena: string
+  - correo: string
+  - telefono: number
+  - identificacion: string
+  - nombre_tipo_identificacion: string
+}
+ 
+class UserUpdationInfo {
+  - nombre: string
+  - correo: string
+  - telefono: number
+  - identificacion: string
+  - nombre_tipo_identificacion: string
+}
+ 
+class UserInfo {
+  - id_persona: string
+  - nombre: string
+  - correo: string
+  - telefono: number
+  - identificacion: string
+  - nombre_tipo_identificacion: string
+  - nombre_rol: UserRol
+}
+ 
+class UserSelectionInfo {
+  - id_persona: string
+  - nombre: string
+  - correo: string
+  - telefono: number
+  - identificacion: string
+  - nombre_tipo_identificacion: string
+  - nombre_rol: UserRol
+  - matricula_valida: boolean
+}
+ 
+class Tournament {
+  - id_torneo: string
+  - nombre: string
+}
+ 
+class UserTournamentRegistration {
+  - nombre: string
+  - id_persona: string
+  - id_torneo: string
+  - puesto: number
+}
+ 
+class Training {
+  - id_entrenamiento: string
+  - tiempo_minutos: number
+  - nombre_entrenamiento: string
+}
+ 
+class TrainingRegistration {
+  - id_entrenamiento: string
+  - id_persona: string
+}
+ 
+class Tuition {
+  - id_persona: string
+  - monto_usd: number
+  - fecha_inscripccion: string
+}
+ 
+class TuitionInfo {
+  - id_persona: string
+  - monto_usd: number
+}
+ 
+interface RequestBase {
+  + type: CommandType
+}
+ 
+class RequestCommand {
+  - requester_id: string
+  - request_id: string
+  - command_name: string
+  - command_content: RequestContent
+  - aprover_id: string
+  - completed: boolean
+}
+ 
+class UserUpdateRequest {
+  - type: CommandType
+  - user_updation: UserUpdationInfo
+  - user_id: string
+}
+ 
+class DeleteTournamentRequest {
+  - type: CommandType
+  - tournament_id: string
+}
+ 
+class DeleteTrainingRequest {
+  - type: CommandType
+  - training_id: string
+}
+ 
+' Relaciones entre Entidades
+RequestCommand o-- RequestContent
+UserUpdateRequest --|> RequestBase
+DeleteTournamentRequest --|> RequestBase
+DeleteTrainingRequest --|> RequestBase
+UserTournamentRegistration --> Tournament
+UserTournamentRegistration --> UserInfo
+TrainingRegistration --> Training
+TrainingRegistration --> UserInfo
+Tuition --> UserInfo
+PaymentComponent --> TuitionInfo
+RequestCommand --> UserInfo : requester_id, aprover_id
+ 
+' Componentes de la Interfaz
+class InputComponent {
+  - onChange: (value: string) => void
+  - name: string
+  - validator: Validator | Validator[]
+}
+ 
+class NavBarComponent {
+  - links: LinkData[]
+}
+ 
+class LinkHandler {
+  - links: LinkData[]
+  - currentId: number
+}
+ 
+class LinkData {
+  - linkComponent: JSX.Element
+  - alignment: LinkAligment
+  - id: number
+}
+ 
+class PaymentComponent {
+  - onPaymentSuccess: () => void
+}
+ 
+class RequestComponent {
+  - request: RequestCommand
+}
+ 
+class UserForm {
+  - onSuccessfulSend: (userCreationInfo: UserCreationInfo) => void
+  - initialData: UserCreationInfo
+}
+ 
+class UserInfoComponent {
+  - userInfo: UserInfo
+}
+ 
+' Relaciones de Componentes
+NavBarComponent o-- LinkHandler
+LinkHandler o-- LinkData
+RequestComponent --> RequestCommand
+UserForm --> UserCreationInfo
+UserInfoComponent --> UserInfo
+ 
+' Rutas
+class Route {
+  - path: string
+  - component: JSX.Element
+}
+ 
+class DashboardRoute {
+  - links: LinkData[]
+}
+ 
+class UserDashboardRoute {
+  - links: LinkData[]
+}
+ 
+' Relaciones de Rutas
+DashboardRoute --> NavBarDashboard
+UserDashboardRoute --> NavBarDashboard
+ 
+' Otros
+class Store {
+  - state: any
+}
+ 
+class TokenStore {
+  - state: string
+}
+ 
+TokenStore --|> Store
+ 
+' Dependencias
+InputComponent ..> Validator
+Auth ..> UserCreationInfo
+ 
+@enduml

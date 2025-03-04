@@ -17,14 +17,6 @@ package "Capa 1: Casos de Uso Principales" as capa1 {
   usecase "Ver información entrenamientos usuario" as UC_VerInfoEntrenamientosUsuario #CCFFCC
   usecase "Solicitud actualización información" as UC_SolicitudActualizarInfo #CCFFCC
 
-  ' Admin-specific use cases (red)
-  usecase "Gestión torneos" as UC_GestionTorneos #FFCCCC
-  usecase "Ejecutar solicitudes" as UC_EjecutarSolicitudes #FFCCCC
-  usecase "Cambiar rol de usuarios" as UC_CambiarRol #FFCCCC
-  usecase "Actualizar información usuarios" as UC_ActualizarUsuarios #FFCCCC
-  usecase "Gestión categorías" as UC_GestionCategorias #FFCCCC
-  usecase "Gestión entrenamientos" as UC_GestionEntrenamientos #FFCCCC
-
   ' Entrenador-specific use cases (blue)
   usecase "Crear entrenamientos" as UC_CrearEntrenamientos #CCCCFF
   usecase "Crear torneos" as UC_CrearTorneos #CCCCFF
