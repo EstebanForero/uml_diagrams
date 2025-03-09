@@ -1,310 +1,487 @@
 @startuml
 
-' Define namespaces
-package "Entities" {
-    class Category {
-        +Uuid id_category
-        +String name
-        +i32 min_age
-        +i32 max_age
-    }
-    class CategoryCreation {
-        +String name
-        +i32 min_age
-        +i32 max_age
-    }
-    class Tournament {
-        +Uuid id_tournament
-        +String name
-        +Uuid id_category
-        +NaiveDateTime start_datetime
-        +NaiveDateTime end_datetime
-    }
-    class TournamentCreation {
-        +String name
-        +Uuid id_category
-        +NaiveDateTime start_datetime
-        +NaiveDateTime end_datetime
-    }
-    class User {
-        +Uuid id_user
-        +String first_name
-        +String last_name
-        +NaiveDate birth_date
-        +NaiveDateTime registration_date
-        +String email
-        +bool email_verified
-        +String phone_number
-        +String country_code
-        +String password
-        +String identification_number
-        +IdType identification_type
-        +URol user_rol
-    }
-    class UserInfo {
-        +Uuid id_user
-        +String first_name
-        +String last_name
-        +NaiveDate birth_date
-        +NaiveDateTime registration_date
-        +String email
-        +bool email_verified
-        +String phone_number
-        +String country_code
-        +String identification_number
-        +IdType identification_type
-        +URol user_rol
-    }
-    class UserCreation {
-        +String first_name
-        +String last_name
-        +NaiveDate birth_date
-        +String email
-        +String phone_number
-        +String country_code
-        +String password
-        +String identification_number
-        +IdType identification_type
-    }
-    class UserLogInInfo {
-        +String identifier
-        +String password
-    }
-    class CategoryRequirement {
-        +Uuid id_category_requirement
-        +Uuid id_category
-        +String requirement_description
-        +LevelName required_level
-    }
-    class UserCategory {
-        +Uuid id_user
-        +Uuid id_category
-        +String user_level
-    }
-    class TournamentRegistration {
-        +Uuid id_tournament
-        +Uuid id_user
-        +NaiveDateTime registration_datetime
-    }
-    class TournamentAttendance {
-        +Uuid id_tournament
-        +Uuid id_user
-        +NaiveDateTime attendance_datetime
-        +i32 position
-    }
+' Layer: Entities (entities crate)
+package "entities" {
+  ' Entities
+  class Category {
+    +Uuid id_category
+    +String name
+    +i32 min_age
+    +i32 max_age
+  }
+  
+  class CategoryCreation {
+    +String name
+    +i32 min_age
+    +i32 max_age
+  }
+  
+  class Level {
+    +LevelName level_name
+  }
+  
+  class CategoryRequirement {
+    +Uuid id_category_requirement
+    +Uuid id_category
+    +String requirement_description
+    +LevelName required_level
+  }
+  
+  class Tournament {
+    +Uuid id_tournament
+    +String name
+    +Uuid id_category
+    +NaiveDateTime start_datetime
+    +NaiveDateTime end_datetime
+  }
+  
+  class TournamentCreation {
+    +String name
+    +Uuid id_category
+    +NaiveDateTime start_datetime
+    +NaiveDateTime end_datetime
+  }
+  
+  class TournamentRegistration {
+    +Uuid id_tournament
+    +Uuid id_user
+    +NaiveDateTime registration_datetime
+  }
+  
+  class TournamentAttendance {
+    +Uuid id_tournament
+    +Uuid id_user
+    +NaiveDateTime attendance_datetime
+    +i32 position
+  }
+  
+  class User {
+    +Uuid id_user
+    +String first_name
+    +String last_name
+    +NaiveDate birth_date
+    +NaiveDateTime registration_date
+    +String email
+    +bool email_verified
+    +String phone_number
+    +String country_code
+    +String password
+    +String identification_number
+    +IdType identification_type
+    +URol user_rol
+  }
+  
+  class UserInfo {
+    +Uuid id_user
+    +String first_name
+    +String last_name
+    +NaiveDate birth_date
+    +NaiveDateTime registration_date
+    +String email
+    +bool email_verified
+    +String phone_number
+    +String country_code
+    +String identification_number
+    +IdType identification_type
+    +URol user_rol
+  }
+  
+  class UserCreation {
+    +String first_name
+    +String last_name
+    +NaiveDate birth_date
+    +String email
+    +String phone_number
+    +String country_code
+    +String password
+    +String identification_number
+    +IdType identification_type
+  }
+  
+  class UserLogInInfo {
+    +String identifier
+    +String password
+  }
+  
+  class DocInfo {
+    +String identification_number
+    +IdType identification_type
+  }
+  
+  class UserRole {
+    +URol user_rol
+  }
+  
+  class IdentificationInfo {
+    +IdType identification_type
+  }
+  
+  class UserCategory {
+    +Uuid id_user
+    +Uuid id_category
+    +LevelName user_level
+  }
+  
+  class Training {
+    +Uuid id_training
+    +String name
+    +Uuid id_category
+    +NaiveDateTime start_datetime
+    +NaiveDateTime end_datetime
+    +f64 minimum_payment
+  }
+  
+  class TrainingRegistration {
+    +Uuid id_training
+    +Uuid id_user
+    +NaiveDateTime registration_datetime
+    +bool attended
+    +NaiveDateTime attendance_datetime
+  }
+  
+  class Tuition {
+    +Uuid id_tuition
+    +Uuid id_user
+    +f64 amount
+    +NaiveDateTime payment_date
+  }
+  
+  class Request {
+    +Uuid id
+    +Uuid requester_id
+    +String requested_command
+    +String justification
+    +Option<bool> approved
+    +Option<Uuid> approver_id
+  }
+  
+  ' Enums
+  enum LevelName <<enumeration>> {
+    BEGGINER
+    AMATEUR
+    PROFESSIONAL
+  }
+  
+  enum IdType <<enumeration>> {
+    CC
+  }
+  
+  enum URol <<enumeration>> {
+    USER
+    ADMIN
+    TRAINER
+  }
 }
 
-package "UseCases" {
-    interface CategoryRepository {
-        +create_category(category: &Category) Result<()>
-        +get_category_by_id(id: Uuid) Result<Option<Category>>
-        +update_category(category: &Category) Result<()>
-        +delete_category(id: Uuid) Result<()>
-        +list_categories() Result<Vec<Category>>
-        +get_category_by_name(name: &str) Result<Option<Category>>
+' Layer: Repositories (use_cases and turso_db crates)
+package "use_cases" {
+  package "Repositories" {
+    interface CategoryRepository <<interface>> {
+      +create_category(category: &Category) -> Result<()>
+      +get_category_by_id(id: Uuid) -> Result<Option<Category>>
+      +update_category(category: &Category) -> Result<()>
+      +delete_category(id: Uuid) -> Result<()>
+      +list_categories() -> Result<Vec<Category>>
+      +get_category_by_name(name: &str) -> Result<Option<Category>>
     }
-    interface CategoryRequirementRepository {
-        +create_category_requirement(requirement: &CategoryRequirement) Result<()>
-        +get_category_requirements(category_id: Uuid) Result<Vec<CategoryRequirement>>
+    
+    interface CategoryRequirementRepository <<interface>> {
+      +create_category_requirement(requirement: &CategoryRequirement) -> Result<()>
+      +get_category_requirements(category_id: Uuid) -> Result<Vec<CategoryRequirement>>
     }
-    interface UserCategoryRepository {
-        +get_user_category(id_user: Uuid, id_category: Uuid) Result<Option<UserCategory>>
+    
+    interface UserCategoryRepository <<interface>> {
+      +get_user_category(id_user: Uuid, id_category: Uuid) -> Result<Option<UserCategory>>
+      +user_has_category(id_user: Uuid, id_category: Uuid) -> Result<bool>
+      +create_user_category(user_category: &UserCategory) -> Result<()>
+      +get_user_categories(user_id: Uuid) -> Result<Vec<UserCategory>>
     }
+    
+    interface LevelRepository <<interface>> {
+      +create_level(level: &Level) -> Result<()>
+      +get_level_by_id(id: Uuid) -> Result<Option<Level>>
+      +list_levels() -> Result<Vec<Level>>
+    }
+    
+    interface UserRepository <<interface>> {
+      +create_user(user: &User) -> Result<()>
+      +get_user_by_id(id: Uuid) -> Result<Option<User>>
+      +get_user_id_by_email(email: &str) -> Result<Option<Uuid>>
+      +get_user_id_by_phone(phone_number: &str) -> Result<Option<Uuid>>
+      +get_user_id_by_identification(identification_number: &str, identification_type: &IdType) -> Result<Option<Uuid>>
+      +update_user(user: &User) -> Result<()>
+      +delete_user(id: Uuid) -> Result<()>
+      +list_users() -> Result<Vec<User>>
+    }
+    
+    interface TournamentRepository <<interface>> {
+      +create_tournament(tournament: &Tournament) -> Result<()>
+      +get_tournament_by_id(id: Uuid) -> Result<Option<Tournament>>
+      +update_tournament(tournament: &Tournament) -> Result<()>
+      +delete_tournament(id: Uuid) -> Result<()>
+      +list_tournaments() -> Result<Vec<Tournament>>
+    }
+    
+    interface TournamentRegistrationRepository <<interface>> {
+      +register_user_for_tournament(registration: &TournamentRegistration) -> Result<()>
+      +get_tournament_registrations(tournament_id: Uuid) -> Result<Vec<TournamentRegistration>>
+    }
+    
+    interface TournamentAttendanceRepository <<interface>> {
+      +record_tournament_attendance(attendance: &TournamentAttendance) -> Result<()>
+      +get_tournament_attendance(tournament_id: Uuid) -> Result<Vec<TournamentAttendance>>
+      +update_tournament_position(tournament_id: Uuid, user_id: Uuid, position: i32) -> Result<()>
+    }
+    
+    interface TrainingRepository <<interface>> {
+      +create_training(training: &Training) -> Result<()>
+      +get_training_by_id(id: Uuid) -> Result<Option<Training>>
+      +update_training(training: &Training) -> Result<()>
+      +delete_training(id: Uuid) -> Result<()>
+      +list_trainings() -> Result<Vec<Training>>
+    }
+    
+    interface TrainingRegistrationRepository <<interface>> {
+      +register_user_for_training(registration: &TrainingRegistration) -> Result<()>
+      +get_training_registrations(training_id: Uuid) -> Result<Vec<TrainingRegistration>>
+      +mark_training_attendance(training_id: Uuid, user_id: Uuid, attended: bool) -> Result<()>
+    }
+    
+    interface TuitionRepository <<interface>> {
+      +record_tuition_payment(tuition: &Tuition) -> Result<()>
+      +get_tuition_by_id(id: Uuid) -> Result<Option<Tuition>>
+      +list_tuition_payments_for_user(user_id: Uuid) -> Result<Vec<Tuition>>
+      +list_all_tuition_payments() -> Result<Vec<Tuition>>
+      +has_active_tuition(user_id: Uuid) -> Result<bool>
+    }
+    
+    interface RequestRepository <<interface>> {
+      +create_request(request: &Request) -> Result<()>
+      +get_request_by_id(id: Uuid) -> Result<Option<Request>>
+      +update_request(request: &Request) -> Result<()>
+      +list_requests() -> Result<Vec<Request>>
+      +list_requests_by_user(user_id: Uuid) -> Result<Vec<Request>>
+    }
+  }
+}
+
+package "turso_db" {
+  class TursoDb {
+    -db: Arc<libsql::Database>
+    -conn: Option<Connection>
+  }
+}
+
+' Layer: Use Cases (use_cases crate)
+package "use_cases" {
+  package "UseCases" {
     class CategoryService {
-        -category_repo: Arc<dyn CategoryRepository>
-        -requirement_repo: Arc<dyn CategoryRequirementRepository>
-        -user_category_repo: Arc<dyn UserCategoryRepository>
-        +add_category(category: Category) Result<()>
-        +get_category_by_id(id: Uuid) Result<Category>
-        +update_category(category: &Category) Result<()>
-        +delete_category(id: Uuid) Result<()>
-        +get_all_categories() Result<Vec<Category>>
-        +add_category_requirement(category_req: &CategoryRequirement) Result<()>
-        +get_category_requirements(category_id: Uuid) Result<Vec<CategoryRequirement>>
-        +get_user_category(user_id: Uuid, category_id: Uuid) Result<Option<UserCategory>>
+      -category_repo: Arc<dyn CategoryRepository>
+      -requirement_repo: Arc<dyn CategoryRequirementRepository>
+      -user_category_repo: Arc<dyn UserCategoryRepository>
+      -user_service: UserService
+      +new(category_repo: Arc<dyn CategoryRepository>, requirement_repo: Arc<dyn CategoryRequirementRepository>, user_category_repo: Arc<dyn UserCategoryRepository>, user_service: UserService) -> Self
+      +delete_category(id: Uuid) -> Result<()>
+      +update_category(category: &Category) -> Result<()>
+      +get_category_by_id(id: Uuid) -> Result<Category>
+      +get_all_categories() -> Result<Vec<Category>>
+      +add_category(category: Category) -> Result<()>
+      +add_category_requirement(category_req: &CategoryRequirement) -> Result<()>
+      +get_category_requirements(category_id: Uuid) -> Result<Vec<CategoryRequirement>>
+      +get_user_category(user_id: Uuid, category_id: Uuid) -> Result<Option<UserCategory>>
+      +user_has_category(user_id: Uuid, category_id: Uuid) -> Result<bool>
+      +get_user_categories(user_id: Uuid) -> Result<Vec<UserCategory>>
+      +add_user_to_category(user_id: Uuid, category_id: Uuid) -> Result<()>
     }
-    interface UserRepository {
-        +create_user(user: &User) Result<()>
-        +get_user_by_id(id: Uuid) Result<Option<User>>
-        +get_user_id_by_email(email: &str) Result<Option<Uuid>>
-        +get_user_id_by_phone(phone_number: &str) Result<Option<Uuid>>
-        +get_user_id_by_identification(identification_number: &str, identification_type: &IdType) Result<Option<Uuid>>
-        +update_user(user: &User) Result<()>
-        +delete_user(id: Uuid) Result<()>
-        +list_users() Result<Vec<User>>
+    
+    interface PasswordHasher <<interface>> {
+      +hash(content: &str) -> Result<String>
+      +verify(original: &str, hashed: &str) -> Result<bool>
     }
-    interface PasswordHasher {
-        +hash(content: &str) Result<String>
-        +verify(original: &str, hashed: &str) Result<bool>
-    }
+    
     class UserService {
-        -user_repo: Arc<dyn UserRepository>
-        -password_hasher: Arc<dyn PasswordHasher>
-        +register_user(user_creation: UserCreation) Result<()>
-        +get_all_users() Result<Vec<UserInfo>>
-        +get_user_by_id(user_id: Uuid) Result<UserInfo>
-        +log_in_user(user_log_in_info: &UserLogInInfo) Result<LogInResponse>
+      -user_repo: Arc<dyn UserRepository>
+      -password_hasher: Arc<dyn PasswordHasher>
+      +new(user_repo: Arc<dyn UserRepository>, password_hasher: Arc<dyn PasswordHasher>) -> Self
+      +register_user(user_creation: UserCreation) -> Result<()>
+      +get_all_users() -> Result<Vec<UserInfo>>
+      +get_user_by_id(user_id: Uuid) -> Result<UserInfo>
+      +log_in_user(user_log_in_info: &UserLogInInfo) -> Result<LogInResponse>
     }
+    
     class LogInResponse {
-        +Uuid user_id
-        +URol user_rol
+      +Uuid user_id
+      +URol user_rol
     }
-    interface TournamentRepository {
-        +create_tournament(tournament: &Tournament) Result<()>
-        +get_tournament_by_id(id: Uuid) Result<Option<Tournament>>
-        +update_tournament(tournament: &Tournament) Result<()>
-        +delete_tournament(id: Uuid) Result<()>
-        +list_tournaments() Result<Vec<Tournament>>
+    
+    class EmailIdentifier {
+      -repo: Arc<dyn UserRepository>
+      -next: Option<Arc<dyn Identifier>>
+      +new(repo: Arc<dyn UserRepository>, next: Option<Arc<dyn Identifier>>) -> Self
+      +identify(identifier: &str) -> Result<Uuid>
+      +next(next: Arc<dyn Identifier>)
     }
-    interface TournamentRegistrationRepository {
-        +register_user_for_tournament(registration: &TournamentRegistration) Result<()>
-        +get_tournament_registrations(tournament_id: Uuid) Result<Vec<TournamentRegistration>>
+    
+    class PhoneIdentifier {
+      -repo: Arc<dyn UserRepository>
+      -next: Option<Arc<dyn Identifier>>
+      +new(repo: Arc<dyn UserRepository>, next: Option<Arc<dyn Identifier>>) -> Self
+      +identify(identifier: &str) -> Result<Uuid>
+      +next(next: Arc<dyn Identifier>)
     }
-    interface TournamentAttendanceRepository {
-        +record_tournament_attendance(attendance: &TournamentAttendance) Result<()>
-        +get_tournament_attendance(tournament_id: Uuid) Result<Vec<TournamentAttendance>>
-        +update_tournament_position(tournament_id: Uuid, user_id: Uuid, position: i32) Result<()>
+    
+    interface Identifier <<interface>> {
+      +identify(identifier: &str) -> Result<Uuid>
+      +next(next: Arc<dyn Identifier>)
     }
+    
     class TournamentService {
-        -tournament_repo: Arc<dyn TournamentRepository>
-        -registration_repo: Arc<dyn TournamentRegistrationRepository>
-        -attendance_repo: Arc<dyn TournamentAttendanceRepository>
-        +create_tournament(tournament: TournamentCreation) Result<()>
-        +get_tournament(id: Uuid) Result<Tournament>
-        +update_tournament(tournament: Tournament) Result<()>
-        +delete_tournament(id: Uuid) Result<()>
-        +list_tournaments() Result<Vec<Tournament>>
-        +register_user(registration: TournamentRegistration) Result<()>
-        +record_attendance(attendance: TournamentAttendance) Result<()>
-        +update_position(tournament_id: Uuid, user_id: Uuid, position: i32) Result<()>
+      -tournament_repo: Arc<dyn TournamentRepository>
+      -registration_repo: Arc<dyn TournamentRegistrationRepository>
+      -attendance_repo: Arc<dyn TournamentAttendanceRepository>
+      -category_service: CategoryService
+      +new(tournament_repo: Arc<dyn TournamentRepository>, registration_repo: Arc<dyn TournamentRegistrationRepository>, attendance_repo: Arc<dyn TournamentAttendanceRepository>, category_service: CategoryService) -> Self
+      +create_tournament(tournament: TournamentCreation) -> Result<()>
+      +get_tournament(id: Uuid) -> Result<Tournament>
+      +update_tournament(tournament: Tournament) -> Result<()>
+      +delete_tournament(id: Uuid) -> Result<()>
+      +list_tournaments() -> Result<Vec<Tournament>>
+      +register_user(registration: TournamentRegistration) -> Result<()>
+      +record_attendance(attendance: TournamentAttendance) -> Result<()>
+      +update_position(tournament_id: Uuid, user_id: Uuid, position: i32) -> Result<()>
+      +get_eligible_tournaments(user_id: Uuid) -> Result<Vec<Tournament>>
     }
+    
+    class TrainingService {
+      -training_repo: Arc<dyn TrainingRepository>
+      -registration_repo: Arc<dyn TrainingRegistrationRepository>
+      -category_service: CategoryService
+      +new(training_repo: Arc<dyn TrainingRepository>, registration_repo: Arc<dyn TrainingRegistrationRepository>, category_service: CategoryService) -> Self
+      +create_training(training: &Training) -> Result<()>
+      +get_training(id: Uuid) -> Result<Training>
+      +update_training(training: &Training) -> Result<()>
+      +delete_training(id: Uuid) -> Result<()>
+      +list_trainings() -> Result<Vec<Training>>
+      +register_user(registration: TrainingRegistration) -> Result<()>
+      +mark_attendance(training_id: Uuid, user_id: Uuid, attended: bool) -> Result<()>
+      +get_eligible_trainings(user_id: Uuid) -> Result<Vec<Training>>
+    }
+    
+    class TuitionService {
+      -tuition_repo: Arc<dyn TuitionRepository>
+      +new(tuition_repo: Arc<dyn TuitionRepository>) -> Self
+      +pay_tuition(user_id: Uuid, amount: f64) -> Result<()>
+      +has_active_tuition(user_id: Uuid) -> Result<bool>
+      +get_user_tuitions(user_id: Uuid) -> Result<Vec<Tuition>>
+      +get_all_tuitions() -> Result<Vec<Tuition>>
+    }
+    
+    class RequestService {
+      -request_repo: Arc<dyn RequestRepository>
+      +new(request_repo: Arc<dyn RequestRepository>) -> Self
+      +create_request(requester_id: Uuid, requested_command: String, justification: String) -> Result<()>
+      +complete_request(request_id: Uuid, approver_id: Uuid, approved: bool) -> Result<()>
+      +list_requests() -> Result<Vec<Request>>
+      +list_user_requests(user_id: Uuid) -> Result<Vec<Request>>
+      +get_request_by_id(id: Uuid) -> Result<Option<Request>>
+    }
+  }
 }
 
-package "Repositories" {
-    class TursoDb {
-        -db: Arc<libsql::Database>
-        -conn: Option<Connection>
-        +from(url: &str, token: &str) Result<TursoDb>
-        +get_connection() Result<Connection>
-    }
+' Layer: HTTP API (http_api crate)
+package "http_api" {
+  class UserInfoAuth {
+    +Uuid user_id
+    +URol user_rol
+  }
 }
 
-package "HttpApi" {
-    class CategoryEndpoints {
-        +category_router(category_service: CategoryService) Router
-        +alive() &'static str
-        +create_category(State<CategoryService>, Json<Category>) HttpResult<impl IntoResponse>
-        +get_category(State<CategoryService>, Path<Uuid>) HttpResult<Json<Category>>
-        +update_category(State<CategoryService>, Json<Category>) Result<Json<Category>, Response>
-        +delete_category(State<CategoryService>, Path<Uuid>) Result<Json<String>, Response>
-        +list_categories(State<CategoryService>) Result<Json<Vec<Category>>, Response>
-        +add_requirement(State<CategoryService>, Json<CategoryRequirement>) Result<Json<CategoryRequirement>, Response>
-        +get_requirements(State<CategoryService>, Path<Uuid>) Result<Json<Vec<CategoryRequirement>>, Response>
-        +get_user_category(State<CategoryService>, Path<(Uuid, Uuid)>) Result<Json<Option<UserCategory>>, Response>
-    }
-    class UserEndpoints {
-        +user_router(user_service: UserService, token_key: &str) Router
-        +alive() Result<Json<String>, Response>
-        +register_user(State<(UserService, String)>, Json<UserCreation>) HttpResult<impl IntoResponse>
-        +log_in_user(State<(UserService, String)>, Json<UserLogInInfo>) Result<Json<LogInResponse>, Response>
-        +get_all_users(State<(UserService, String)>) Result<Json<Vec<UserInfo>>, Response>
-        +get_user_by_id(State<(UserService, String)>, Path<Uuid>) Result<Json<UserInfo>, Response>
-    }
-    class TournamentEndpoints {
-        +tournament_router(tournament_service: TournamentService) Router
-        +alive() &'static str
-        +create_tournament(State<TournamentService>, Json<TournamentCreation>) HttpResult<impl IntoResponse>
-        +get_tournament(State<TournamentService>, Path<Uuid>) Result<Json<Tournament>, Response>
-        +update_tournament(State<TournamentService>, Json<Tournament>) Result<(), Response>
-        +delete_tournament(State<TournamentService>, Path<Uuid>) Result<Json<String>, Response>
-        +list_tournaments(State<TournamentService>) Result<Json<Vec<Tournament>>, Response>
-        +register_user(State<TournamentService>, Json<TournamentRegistration>) Result<Json<String>, Response>
-        +record_attendance(State<TournamentService>, Json<TournamentAttendance>) Result<Json<String>, Response>
-        +update_position(State<TournamentService>, Path<(Uuid, Uuid)>, Json<i32>) Result<Json<String>, Response>
-    }
-}
-
-package "Utilities" {
-    class BcryptHasher {
-        +hash(content: &str) Result<String>
-        +verify(original: &str, hashed: &str) Result<bool>
-    }
+' Layer: Utilities (bcrypt_hasher crate)
+package "bcrypt_hasher" {
+  class BcryptHasher {
+    +hash(content: &str) -> Result<String>
+    +verify(original: &str, hashed: &str) -> Result<bool>
+  }
 }
 
 ' Relationships
-' Partial structs dependencies
-CategoryCreation --> Category : used to create
-TournamentCreation --> Tournament : used to create
-UserCreation --> User : used to create
-UserInfo --> User : projected from
 
-' Associations between entities
+' Partial Struct Relationships
+CategoryCreation --> Category : <<create>>
+TournamentCreation --> Tournament : <<create>>
+UserCreation --> User : <<create>>
+UserInfo --> User : <<project>>
+
+' Enum Relationships
+CategoryRequirement --> LevelName : required_level
+User --> IdType : identification_type
+User --> URol : user_rol
+UserCreation --> IdType : identification_type
+UserInfo --> IdType : identification_type
+UserInfo --> URol : user_rol
+UserCategory --> LevelName : user_level
+Level --> LevelName : level_name
+LogInResponse --> URol : user_rol
+UserInfoAuth --> URol : user_rol
+DocInfo --> IdType : identification_type
+UserRole --> URol : user_rol
+IdentificationInfo --> IdType : identification_type
+
+' Entity Associations
 Tournament --> Category : id_category
-CategoryRequirement --> Category : id_category
-UserCategory --> User : id_user
-UserCategory --> Category : id_category
-TournamentRegistration --> Tournament : id_tournament
-TournamentRegistration --> User : id_user
-TournamentAttendance --> Tournament : id_tournament
-TournamentAttendance --> User : id_user
+Category --> CategoryRequirement : id_category
+User --> UserCategory : id_user
+Category --> UserCategory : id_category
+Tournament --> TournamentRegistration : id_tournament
+User --> TournamentRegistration : id_user
+Tournament --> TournamentAttendance : id_tournament
+User --> TournamentAttendance : id_user
+Training --> Category : id_category
+Training --> TrainingRegistration : id_training
+User --> TrainingRegistration : id_user
+Tuition --> User : id_user
+Request --> User : requester_id
+Request --> User : approver_id
 
-' Dependencies for services
+' Repository Implementations
+TursoDb ..|> CategoryRepository
+TursoDb ..|> CategoryRequirementRepository
+TursoDb ..|> UserCategoryRepository
+TursoDb ..|> LevelRepository
+TursoDb ..|> UserRepository
+TursoDb ..|> TournamentRepository
+TursoDb ..|> TournamentRegistrationRepository
+TursoDb ..|> TournamentAttendanceRepository
+TursoDb ..|> TrainingRepository
+TursoDb ..|> TrainingRegistrationRepository
+TursoDb ..|> TuitionRepository
+TursoDb ..|> RequestRepository
+
+' Service Dependencies
 CategoryService --> CategoryRepository : uses
 CategoryService --> CategoryRequirementRepository : uses
 CategoryService --> UserCategoryRepository : uses
+CategoryService --> UserService : uses
 UserService --> UserRepository : uses
 UserService --> PasswordHasher : uses
 TournamentService --> TournamentRepository : uses
 TournamentService --> TournamentRegistrationRepository : uses
 TournamentService --> TournamentAttendanceRepository : uses
+TournamentService --> CategoryService : uses
+TrainingService --> TrainingRepository : uses
+TrainingService --> TrainingRegistrationRepository : uses
+TrainingService --> CategoryService : uses
+TuitionService --> TuitionRepository : uses
+RequestService --> RequestRepository : uses
+EmailIdentifier --> UserRepository : uses
+PhoneIdentifier --> UserRepository : uses
 
-' Realization for TursoDb
-TursoDb ..|> CategoryRepository : implements
-TursoDb ..|> CategoryRequirementRepository : implements
-TursoDb ..|> UserCategoryRepository : implements
-TursoDb ..|> UserRepository : implements
-TursoDb ..|> TournamentRepository : implements
-TursoDb ..|> TournamentRegistrationRepository : implements
-TursoDb ..|> TournamentAttendanceRepository : implements
+' Identifier Relationships
+EmailIdentifier ..|> Identifier
+PhoneIdentifier ..|> Identifier
+PhoneIdentifier --> EmailIdentifier : next
 
-' Dependencies for TursoDb on entities (corrected inaccuracy)
-TursoDb --> Category : uses
-TursoDb --> Tournament : uses
-TursoDb --> User : uses
-TursoDb --> CategoryRequirement : uses
-TursoDb --> UserCategory : uses
-TursoDb --> TournamentRegistration : uses
-TursoDb --> TournamentAttendance : uses
-
-' Dependencies for services on entities
-CategoryService --> Category : uses
-CategoryService --> CategoryRequirement : uses
-CategoryService --> UserCategory : uses
-UserService --> User : uses
-UserService --> UserCreation : uses
-UserService --> UserInfo : uses
-UserService --> UserLogInInfo : uses
-TournamentService --> Tournament : uses
-TournamentService --> TournamentCreation : uses
-TournamentService --> TournamentRegistration : uses
-TournamentService --> TournamentAttendance : uses
-
-' Realization for BcryptHasher
-BcryptHasher ..|> PasswordHasher : implements
-
-' Dependencies for endpoints
-CategoryEndpoints --> CategoryService : uses
-CategoryEndpoints --> Category : uses
-CategoryEndpoints --> CategoryRequirement : uses
-CategoryEndpoints --> UserCategory : uses
-UserEndpoints --> UserService : uses
-UserEndpoints --> UserCreation : uses
-UserEndpoints --> UserLogInInfo : uses
-UserEndpoints --> UserInfo : uses
-TournamentEndpoints --> TournamentService : uses
-TournamentEndpoints --> TournamentCreation : uses
-TournamentEndpoints --> Tournament : uses
-TournamentEndpoints --> TournamentRegistration : uses
-TournamentEndpoints --> TournamentAttendance : uses
+' Utility Implementations
+BcryptHasher ..|> PasswordHasher
 
 @enduml
