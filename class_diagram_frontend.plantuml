@@ -133,59 +133,6 @@ package "Backend Entities" {
   }
 }
 
-package "Components" {
-  class InputComponent {
-    +onChange: (value: string) => void
-    +name: string
-    +validator: Validator | Validator[]
-    +placeholder: string
-    +type: HTMLInputTypeAttribute
-    +defaultValue: string
-    +className: string
-    +disabled: boolean
-  }
-
-  class NavBarComponent {
-  }
-
-  class NavBarDashboard {
-    +links: LinkData[]
-  }
-
-  class PaymentComponent {
-    +onPaymentSuccess: () => void
-  }
-
-  class RequestComponent {
-    +request: RequestCommand
-  }
-
-  class RequestContentVisualizer {
-    +requestContent: RequestContent
-  }
-
-  class UserForm {
-    +onSuccessfulSend: (userCreationInfo: UserCreationInfo) => void
-    +initialData: UserCreationInfo
-    +buttonName: string
-    +showPasswordFields: boolean
-    +exemptValues: ExistanceValues
-  }
-
-  class UserInfoComponent {
-    +userInfo: UserInfo
-    +className: string
-  }
-
-  class UserRoleManagement {
-    +userInfo: UserInfo
-  }
-
-  class UserSelectionComponent {
-    +onChangeUser: (user_id: string) => void
-  }
-}
-
 package "Utilities" {
   class LinkData {
     +linkText: string

@@ -1,0 +1,70 @@
+@startuml
+' Define interfaces
+interface "PasswordHasher" as PH
+interface "UserRepository" as UR
+interface "CategoryRepository" as CR
+interface "CategoryRequirementRepository" as CRR
+interface "UserCategoryRepository" as UCR
+interface "TournamentRepository" as TR
+interface "TournamentRegistrationRepository" as TRR
+interface "TournamentAttendanceRepository" as TAR
+interface "TrainingRepository" as TRN
+interface "TrainingRegistrationRepository" as TRNR
+interface "TuitionRepository" as TUIR
+interface "RequestRepository" as REQR
+
+' Define components
+component "BcryptHasher" as BH
+BH ..|> PH : implements
+
+component "TursoDb" as DB
+DB ..|> UR : implements
+DB ..|> CR : implements
+DB ..|> CRR : implements
+DB ..|> UCR : implements
+DB ..|> TR : implements
+DB ..|> TRR : implements
+DB ..|> TAR : implements
+DB ..|> TRN : implements
+DB ..|> TRNR : implements
+DB ..|> TUIR : implements
+DB ..|> REQR : implements
+
+' Define services
+component "UserService" as US
+US ..> UR : uses
+US ..> PH : uses
+
+component "CategoryService" as CS
+CS ..> CR : uses
+CS ..> CRR : uses
+CS ..> UCR : uses
+CS ..> US : uses
+
+component "TournamentService" as TS
+TS ..> TR : uses
+TS ..> TRR : uses
+TS ..> TAR : uses
+TS ..> CS : uses
+
+component "TrainingService" as TRS
+TRS ..> TRN : uses
+TRS ..> TRNR : uses
+TRS ..> CS : uses
+
+component "TuitionService" as TUS
+TUS ..> TUIR : uses
+
+component "RequestService" as RS
+RS ..> REQR : uses
+
+' Define HttpApi
+component "HttpApi" as HA
+HA ..> US : uses
+HA ..> CS : uses
+HA ..> TS : uses
+HA ..> TRS : uses
+HA ..> TUS : uses
+HA ..> RS : uses
+
+@enduml
