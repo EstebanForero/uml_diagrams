@@ -1,0 +1,26 @@
+@startuml
+title UC_GestionarSolicitudesUsuario (Crear Solicitud): Activity Diagram
+
+start
+:Usuario navega a la página de Solicitudes;
+:Sistema muestra formulario para Crear Nueva Solicitud y lista de solicitudes existentes del usuario;
+:Usuario ingresa Título y Justificación para la nueva solicitud;
+:Usuario envía formulario de creación;
+:Validar datos de entrada (frontend - Zod);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario;
+else (no)
+  :Obtener ID del Usuario autenticado;
+  :Sistema envía datos de la nueva solicitud al Backend API\n(título, justificación, ID solicitante);
+  if (Creación Exitosa en Backend?) then (sí)
+    :Backend API crea la solicitud con estado "PENDIENTE";
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar lista de solicitudes del usuario en la UI;
+    :Limpiar formulario de creación;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

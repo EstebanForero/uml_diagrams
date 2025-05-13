@@ -1,0 +1,23 @@
+@startuml
+title UC_VerInscribirseTorneosUsuario (Inscribirse): Activity Diagram
+
+start
+:Usuario navega a la página de Torneos del Usuario;
+:Sistema carga y muestra Torneos Elegibles y Registrados;
+:Usuario identifica un Torneo Elegible;
+:Usuario hace clic en "Registrarse" para ese torneo;
+if (Usuario autenticado y con ID?) then (sí)
+  :Sistema envía solicitud de registro al Backend API\n(ID Torneo, ID Usuario);
+  if (Registro Exitoso en Backend?) then (sí)
+    :Backend API confirma registro;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar lista de Torneos Elegibles y Registrados;
+  else (no - no elegible, error, etc.)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+else (no)
+  :Mostrar mensaje de error "Usuario no identificado";
+endif
+stop
+@enduml

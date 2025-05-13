@@ -1,0 +1,76 @@
+@startuml
+title UC_GestionarRolesUsuariosAdmin: Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminRoleManagementPage" as RoleMgmtPage <<(R,orchid)>>
+participant "UserRoleCard" as UserCard <<(C,lightgrey)>>
+participant "Select (Role)" as RoleSelect <<(C,lightgrey)>>
+participant "user_backend.ts\nupdateUserRol()" as UserBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> RoleMgmtPage : Navigates to /dashboard_admin/role_management
+activate RoleMgmtPage
+RoleMgmtPage -> QueryClient : useQuery(['allUsersForRoleManagement'])
+activate QueryClient
+QueryClient -> UserBackend : getAllUsers()
+' ... fetchJson -> API to get all users ... '
+UserBackend --> QueryClient : UserInfo[]
+deactivate QueryClient
+QueryClient --> RoleMgmtPage : UserInfo[]
+
+RoleMgmtPage -> UserCard : Renders card for each user with a role selector
+activate UserCard
+UserCard -> RoleSelect : Renders role select dropdown for a user
+
+AdminUser -> RoleSelect : Selects a new URol for a user
+RoleSelect -> UserCard : onValueChange(newRoleValue)
+UserCard -> UserCard : handleRoleChange(newRole)
+
+alt New role is different from current role
+  UserCard -> UserBackend : updateUserRol(userId, {user_rol: newRole})
+  activate UserBackend
+  UserBackend -> FetchUtil : fetchJson("/users/{userId}/role", {PUT, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : PUT /users/{userId}/role ({user_rol: newRole})
+  activate API
+  alt Role updated successfully
+    API --> FetchUtil : HTTP 200 OK (UserInfo with updated role)
+    FetchUtil --> UserBackend : UserInfo
+    UserBackend --> UserCard : UserInfo (updated)
+
+    UserCard -> Toaster : toast.success("Role for {user.name} updated to {newRole}.")
+    activate Toaster
+    deactivate Toaster
+
+    UserCard -> QueryClient : setQueryData(['allUsersForRoleManagement'], ...) ' Optimistic update or to reflect change '
+    UserCard -> QueryClient : invalidateQueries({queryKey: ['user', userId]})
+    activate QueryClient
+    QueryClient -> RoleMgmtPage : Triggers potential refetch/rerender if data structure changes
+    deactivate QueryClient
+    UserCard -> UserCard : setSelectedRole(newRole) ' Local state update '
+  else Error updating role
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> UserBackend : throws Error
+    UserBackend --> UserCard : throws Error
+    UserCard -> Toaster : toast.error("Failed to update role...")
+    activate Toaster
+    deactivate Toaster
+    UserCard -> RoleSelect : Reverts selection to original role (selectedRole state)
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate UserBackend
+else New role is same as current
+  ' No action taken '
+end
+deactivate UserCard
+deactivate RoleMgmtPage
+@enduml

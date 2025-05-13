@@ -1,0 +1,72 @@
+@startuml
+title UC_GestionarNivelesCategoriasEntrenador: Sequence Diagram
+
+actor "Entrenador" as Trainer
+participant "TrainerUserCategoryPage" as TrainerCatPage <<(R,orchid)>>
+participant "UserCategoryManagementCard" as UserCatCard <<(C,lightgrey)>>
+participant "Select (Level)" as LevelSelect <<(C,lightgrey)>>
+participant "category_backend.ts\nupdateUserCategoryLevel()" as CategoryBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+Trainer -> TrainerCatPage : Navigates to /dashboard_trainer/user_categories
+activate TrainerCatPage
+TrainerCatPage -> QueryClient : useQuery(['allUsersForTrainerCategoryMgmt'])
+' ... Load all users ... '
+TrainerCatPage -> TrainerCatPage : Filters/Searches for a specific user (e.g., by email)
+TrainerCatPage -> UserCatCard : Renders card for selected user
+activate UserCatCard
+UserCatCard -> QueryClient : useQuery(['userCategories', user.id_user])
+UserCatCard -> QueryClient : useQuery(['allCategories'])
+' ... Load user's categories and all categories for names ... '
+UserCatCard -> LevelSelect : Renders level select dropdown for a user's category
+
+Trainer -> LevelSelect : Selects a new LevelName for the user in a category
+LevelSelect -> UserCatCard : onValueChange(newLevel)
+UserCatCard -> UserCatCard : handleLevelChange(categoryId, newLevel)
+
+alt New level is different from current level
+  UserCatCard -> CategoryBackend : updateUserCategoryLevel(categoryId, userId, newLevel)
+  activate CategoryBackend
+  CategoryBackend -> FetchUtil : fetchJson("/categories/{catId}/user/{userId}/level/{levelName}", {PUT})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "trainer_token_123"
+  deactivate AuthMgr
+  FetchUtil -> API : PUT /categories/{catId}/user/{userId}/level/{levelName}
+  activate API
+  alt Level updated successfully
+    API --> FetchUtil : HTTP 200 OK (message or void)
+    FetchUtil --> CategoryBackend : (void or success message)
+    CategoryBackend --> UserCatCard : (void or success message)
+
+    UserCatCard -> Toaster : toast.success("Level updated...")
+    activate Toaster
+    deactivate Toaster
+
+    UserCatCard -> QueryClient : invalidateQueries({queryKey: ['userCategories', userId]})
+    activate QueryClient
+    QueryClient -> UserCatCard : Triggers refetch of user's categories, UI updates
+    deactivate QueryClient
+  else Error updating level
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> CategoryBackend : throws Error
+    CategoryBackend --> UserCatCard : throws Error
+    UserCatCard -> Toaster : toast.error("Failed to update level...")
+    activate Toaster
+    deactivate Toaster
+    UserCatCard -> LevelSelect : Reverts selection to original level (selectedRole state)
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate CategoryBackend
+else New level is same as current
+  ' No action taken '
+end
+deactivate UserCatCard
+deactivate TrainerCatPage
+@enduml

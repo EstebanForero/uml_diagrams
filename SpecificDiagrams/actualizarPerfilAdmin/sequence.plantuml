@@ -1,0 +1,66 @@
+@startuml
+title UC_ActualizarPerfilAdmin (Actualizar Perfil Propio): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminIndexPage (ProfileComponent)" as ProfilePage <<(R,orchid)>>
+participant "ReusableForm (Profile)" as ProfileForm <<(C,lightgrey)>>
+participant "user_backend.ts\nupdateUser()" as UserBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> ProfilePage : Navigates to /dashboard_admin/ (displays ProfileComponent)
+activate ProfilePage
+ProfilePage -> QueryClient : useQuery(['user', adminUserId]) ' For initial form values '
+' ... Load admin's own user data ... '
+ProfilePage -> ProfileForm : Renders profile form, pre-filled
+activate ProfileForm
+
+AdminUser -> ProfileForm : Modifies profile details
+AdminUser -> ProfileForm : Clicks "Update Profile"
+ProfileForm -> ProfilePage : onSubmit(values: UserCreation)
+deactivate ProfileForm
+
+ProfilePage -> AuthMgr : getUserId() ' To confirm it's their own profile '
+activate AuthMgr
+AuthMgr --> ProfilePage : adminUserId
+deactivate AuthMgr
+
+ProfilePage -> UserBackend : updateUser(adminUserId, values)
+activate UserBackend
+UserBackend -> FetchUtil : fetchJson("/users/{adminUserId}", {PUT, body})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "admin_token_xyz"
+deactivate AuthMgr
+FetchUtil -> API : PUT /users/{adminUserId} (updatedProfileData)
+activate API
+alt Profile updated successfully
+  API --> FetchUtil : HTTP 200 OK (UserInfo)
+  FetchUtil --> UserBackend : UserInfo
+  UserBackend --> ProfilePage : UserInfo
+
+  ProfilePage -> Toaster : toast.success("Profile updated successfully")
+  activate Toaster
+  deactivate Toaster
+
+  ProfilePage -> QueryClient : invalidateQueries(['user', adminUserId])
+  activate QueryClient
+  QueryClient -> ProfilePage : Triggers refetch, UI updates
+  deactivate QueryClient
+else Error updating profile
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> UserBackend : throws Error
+  UserBackend --> ProfilePage : throws Error
+  ProfilePage -> Toaster : toast.error("Error updating profile...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate UserBackend
+deactivate ProfilePage
+@enduml

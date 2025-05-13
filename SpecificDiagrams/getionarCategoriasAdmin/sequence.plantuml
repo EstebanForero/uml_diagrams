@@ -1,0 +1,78 @@
+@startuml
+title UC_GestionarCategoriasCRUDAdmin (Añadir Requisito): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "CategoryManagementPage" as CatMgmtPage <<(R,orchid)>>
+participant "CategoryComponentCard" as CatCard <<(C,lightgrey)>>
+participant "CategoryRequirementsDialog" as ReqDialog <<(C,lightgrey)>>
+participant "CategorySelector" as CatSelector <<(C,lightgrey)>>
+participant "LevelSelect (Requirement)" as LevelSelectReq <<(C,lightgrey)>>
+participant "category_backend.ts\naddRequirement()" as CategoryBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> CatMgmtPage : Navigates to /dashboard_admin/category_management
+activate CatMgmtPage
+' ... Initial load of categories ... '
+
+AdminUser -> CatCard : Clicks "Requirements" for a target category
+CatCard -> CatMgmtPage : onViewRequirements(categoryId, categoryName)
+CatMgmtPage -> ReqDialog : Opens dialog (isOpen=true, categoryId, categoryName)
+activate ReqDialog
+
+ReqDialog -> QueryClient : useQuery(['requirements', categoryId]) ' For current reqs '
+ReqDialog -> QueryClient : useQuery(['categories']) ' For prerequisite selector '
+' ... Data fetching for dialog ... '
+ReqDialog -> ReqDialog : Renders current requirements and "Add New Requirement" form
+ReqDialog -> CatSelector : Renders dropdown for prerequisite category
+ReqDialog -> LevelSelectReq : Renders dropdown for required level
+
+AdminUser -> CatSelector : Selects a "Prerequisite Category"
+AdminUser -> LevelSelectReq : Selects a "Required Level"
+AdminUser -> ReqDialog : Clicks "Add Requirement"
+ReqDialog -> ReqDialog : onAddSubmit(values: {prerequisite_category_id, required_level})
+alt Form data valid
+  ReqDialog -> CategoryBackend : addRequirement({id_category_requirement, id_category, required_level, description})
+  activate CategoryBackend
+  CategoryBackend -> FetchUtil : fetchJson("/categories/{target_cat_id}/requirements", {POST, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /categories/{target_cat_id}/requirements (requirementData)
+  activate API
+  alt Requirement added successfully
+    API --> FetchUtil : HTTP 200 OK (CategoryRequirement)
+    FetchUtil --> CategoryBackend : CategoryRequirement
+    CategoryBackend --> ReqDialog : CategoryRequirement
+
+    ReqDialog -> Toaster : toast.success("Requirement added...")
+    activate Toaster
+    deactivate Toaster
+
+    ReqDialog -> QueryClient : invalidateQueries({queryKey: ['requirements', target_categoryId]})
+    activate QueryClient
+    QueryClient -> ReqDialog : Triggers refetch of requirements list for the dialog
+    deactivate QueryClient
+    ReqDialog -> ReqDialog : Resets "Add New Requirement" form
+  else Error adding requirement
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> CategoryBackend : throws Error
+    CategoryBackend --> ReqDialog : throws Error
+    ReqDialog -> Toaster : toast.error("Failed to add requirement...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate CategoryBackend
+else Form data invalid (e.g., nothing selected)
+  ReqDialog -> ReqDialog : Shows form validation errors
+end
+deactivate ReqDialog
+deactivate CatMgmtPage
+@enduml

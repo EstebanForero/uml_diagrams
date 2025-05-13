@@ -1,0 +1,73 @@
+@startuml
+title UC_GestionarEntrenamientosCRUDAdmin: Activity Diagram
+
+start
+:Admin navega a Gestión de Entrenamientos;
+:Sistema muestra lista de entrenamientos existentes;
+
+if (¿Qué desea hacer el Admin?) then
+  -->[Crear Entrenamiento]
+    :Admin hace clic en "Crear Nuevo Entrenamiento";
+    :Sistema muestra Formulario de Creación;
+    :Admin ingresa datos (nombre, categoría, entrenador, cancha, fechas LOCALES, pago min.);
+    :Admin envía formulario;
+    :Validar datos (frontend - Zod);
+    if (Datos inválidos?) then (sí)
+      :Mostrar error en formulario;
+    else (no)
+      :Convertir fechas locales a UTC;
+      :Sistema envía datos (con fechas UTC) al Backend API;
+      if (Creación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Actualizar lista de entrenamientos;
+        :Cerrar diálogo;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    endif
+
+elseif (Editar Entrenamiento) then
+    :Admin selecciona un entrenamiento y hace clic en "Editar";
+    :Sistema muestra Formulario de Edición con datos del entrenamiento;
+    :Admin modifica datos;
+    :Admin envía formulario;
+    :Validar datos (frontend - Zod);
+    if (Datos inválidos?) then (sí)
+      :Mostrar error en formulario;
+    else (no)
+      :Convertir fechas locales (si se modificaron) a UTC;
+      :Sistema envía datos actualizados (con fechas UTC) al Backend API;
+      if (Actualización Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Actualizar entrenamiento en la lista;
+        :Cerrar diálogo;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    endif
+
+elseif (Eliminar Entrenamiento) then
+    :Admin selecciona un entrenamiento y hace clic en "Eliminar";
+    :Sistema muestra Diálogo de Confirmación;
+    if (Admin confirma eliminación?) then (sí)
+      :Sistema envía solicitud de eliminación al Backend API;
+      if (Eliminación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Eliminar entrenamiento de la lista;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    else (no)
+      :Cancelar eliminación;
+    endif
+
+else (Ver Inscripciones) 
+    :Admin selecciona un entrenamiento y hace clic en "Registrations";
+    :Sistema muestra Diálogo de Gestión de Inscripciones (AdminTrainingRegistrationsDialog);
+    :Admin puede ver quién está inscrito y su estado de asistencia;
+    :Admin cierra diálogo;
+
+endif
+
+stop
+@enduml

@@ -1,0 +1,68 @@
+@startuml
+title UC_GestionarAsistenciaEntrenamientosEntrenador: Sequence Diagram
+
+actor "Entrenador" as Trainer
+participant "TrainerTrainingPageComponent" as TrainerTrainingPage <<(R,orchid)>>
+participant "TrainerTrainingCard" as TrainerTrainingCard <<(C,lightgrey)>>
+participant "TrainingManagementDialog" as AttendanceDialog <<(C,lightgrey)>>
+participant "Switch (Attendance)" as AttendanceSwitch <<(C,lightgrey)>>
+participant "training_backend.ts\nmarkTrainingAttendance()" as TrainingBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+Trainer -> TrainerTrainingPage : Navigates to /dashboard_trainer/trainings
+activate TrainerTrainingPage
+' ... Initial load of trainings ... '
+
+Trainer -> TrainerTrainingCard : Clicks "Manage Registrations" for a training
+TrainerTrainingCard -> TrainerTrainingPage : onManageClick(trainingId, trainingName)
+TrainerTrainingPage -> AttendanceDialog : Opens dialog (isOpen=true, trainingId)
+activate AttendanceDialog
+
+AttendanceDialog -> QueryClient : useQuery(['trainingRegistrations', trainingId])
+' ... Data fetching for dialog (list of registered users) ... '
+AttendanceDialog -> AttendanceDialog : Renders table of registered users with attendance switches
+
+Trainer -> AttendanceSwitch : Toggles attendance for a user (e.g., from Not Attended to Attended)
+AttendanceSwitch -> AttendanceDialog : onCheckedChange() -> handleAttendanceChange(userId, currentAttendedStatus)
+
+AttendanceDialog -> TrainingBackend : markTrainingAttendance(trainingId, userId, {attended: newStatus})
+activate TrainingBackend
+TrainingBackend -> FetchUtil : fetchJson("/trainings/{tId}/attendance/{uId}", {POST, body})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "trainer_token_123"
+deactivate AuthMgr
+FetchUtil -> API : POST /trainings/{tId}/attendance/{uId} ({attended: newStatus})
+activate API
+alt Attendance marked successfully
+  API --> FetchUtil : HTTP 200 OK (message string or void)
+  FetchUtil --> TrainingBackend : (void or success message)
+  TrainingBackend --> AttendanceDialog : (void or success message)
+
+  AttendanceDialog -> Toaster : toast.success("Attendance updated...")
+  activate Toaster
+  deactivate Toaster
+  AttendanceDialog -> QueryClient : invalidateQueries({queryKey: ['trainingRegistrations', trainingId]})
+  activate QueryClient
+  QueryClient -> AttendanceDialog : Triggers refetch, UI updates
+  deactivate QueryClient
+else Error marking attendance
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> TrainingBackend : throws Error
+  TrainingBackend --> AttendanceDialog : throws Error
+  AttendanceDialog -> Toaster : toast.error("Failed to update attendance...")
+  activate Toaster
+  deactivate Toaster
+  AttendanceDialog -> AttendanceSwitch : Reverts switch to original state (optional)
+end
+deactivate API
+deactivate FetchUtil
+deactivate TrainingBackend
+deactivate AttendanceDialog
+deactivate TrainerTrainingPage
+@enduml

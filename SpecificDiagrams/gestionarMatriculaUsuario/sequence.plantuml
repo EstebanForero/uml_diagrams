@@ -1,0 +1,82 @@
+@startuml
+title UC_GestionarMatriculaUsuario (Pagar Matrícula): Sequence Diagram
+
+actor "Usuario" as User
+participant "UserTuitionPageComponent" as TuitionPage <<(R,orchid)>>
+participant "PaymentOptions" as PaymentOptionsUI <<(C,lightgrey)>>
+participant "tuition_backend.ts\npayTuition()" as TuitionBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> TuitionPage : Navigates to /dashboard_user/tuition
+activate TuitionPage
+
+TuitionPage -> QueryClient : useQuery(['hasActiveTuition', userId])
+activate QueryClient
+QueryClient -> TuitionBackend : hasActiveTuition(userId)
+activate TuitionBackend
+' ... fetchJson -> API to check active tuition ... '
+alt Has active tuition
+  TuitionBackend --> QueryClient : true
+  QueryClient -> TuitionBackend : listUserTuitions(userId) ' if needed for details '
+  ' ... fetchJson -> API to get tuition details ... '
+  TuitionBackend --> QueryClient : Tuition[]
+  QueryClient --> TuitionPage : {hasActive: true, tuitions: Tuition[]}
+  TuitionPage -> TuitionPage : Renders TuitionDetails component
+  deactivate QueryClient
+  deactivate TuitionBackend
+  deactivate TuitionPage
+else No active tuition
+  TuitionBackend --> QueryClient : false
+  QueryClient --> TuitionPage : {hasActive: false}
+  TuitionPage -> PaymentOptionsUI : Renders payment options
+  activate PaymentOptionsUI
+end
+deactivate QueryClient
+deactivate TuitionBackend
+
+
+User -> PaymentOptionsUI : Selects a payment plan (e.g., $20)
+PaymentOptionsUI -> TuitionPage : onSelectPlan(amount)
+deactivate PaymentOptionsUI
+
+TuitionPage -> TuitionBackend : payTuition(amount)
+activate TuitionBackend
+TuitionBackend -> FetchUtil : fetchJson("/tuitions/pay/{amount}", {POST})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "user_token_abc"
+deactivate AuthMgr
+FetchUtil -> API : POST /tuitions/pay/{amount}
+activate API
+alt Payment successful
+  API --> FetchUtil : HTTP 200 OK (Tuition object)
+  FetchUtil --> TuitionBackend : Tuition
+  TuitionBackend --> TuitionPage : Tuition
+
+  TuitionPage -> Toaster : toast.success("Tuition paid successfully")
+  activate Toaster
+  deactivate Toaster
+
+  TuitionPage -> QueryClient : invalidateQueries(['hasActiveTuition', userId])
+  TuitionPage -> QueryClient : invalidateQueries(['userTuitions', userId])
+  activate QueryClient
+  QueryClient -> TuitionPage : Triggers refetch, UI updates to show active tuition
+  deactivate QueryClient
+else Payment failed
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> TuitionBackend : throws Error
+  TuitionBackend --> TuitionPage : throws Error
+  TuitionPage -> Toaster : toast.error("Error paying tuition...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate TuitionBackend
+deactivate TuitionPage
+@enduml

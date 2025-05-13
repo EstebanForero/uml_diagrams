@@ -1,0 +1,27 @@
+@startuml
+title UC_GestionarUsuariosCRUDAdmin (Editar Usuario): Activity Diagram
+
+start
+:Admin navega a Gestión de Usuarios;
+:Sistema muestra tabla con todos los usuarios;
+:Admin selecciona un Usuario y hace clic en "Editar";
+:Sistema muestra Diálogo de Edición con datos del usuario pre-cargados;
+:Admin modifica los campos deseados (nombre, email, etc., opcionalmente contraseña);
+:Admin hace clic en "Guardar Cambios";
+:Validar datos de entrada (frontend - Zod);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario de edición;
+else (no)
+  :Sistema envía datos actualizados del usuario al Backend API;
+  if (Actualización Exitosa en Backend?) then (sí)
+    :Backend API actualiza los datos del usuario;
+    :Mostrar mensaje de éxito (Toast);
+    :Cerrar diálogo de edición;
+    :Actualizar tabla de usuarios en la UI;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

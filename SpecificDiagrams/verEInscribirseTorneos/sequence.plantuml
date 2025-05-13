@@ -1,0 +1,79 @@
+@startuml
+title UC_VerInscribirseTorneosUsuario (Inscribirse): Sequence Diagram
+
+actor "Usuario" as User
+participant "TournamentPageComponent" as TournamentPage <<(R,orchid)>>
+participant "UserTournamentCard" as TournamentCard <<(C,lightgrey)>>
+participant "tournament_backend.ts\nregisterUserForTournament()" as TournamentBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> TournamentPage : Navigates to /dashboard_user/tournament
+activate TournamentPage
+TournamentPage -> QueryClient : useQuery(['eligibleTournaments', userId])
+activate QueryClient
+QueryClient -> TournamentBackend : getEligibleTournamentsForUser(userId)
+activate TournamentBackend
+' ... fetchJson -> API ... '
+TournamentBackend --> QueryClient : EligibleTournaments[]
+deactivate TournamentBackend
+QueryClient --> TournamentPage : EligibleTournaments[]
+deactivate QueryClient
+
+TournamentPage -> TournamentCard : Renders available tournament card
+activate TournamentCard
+
+User -> TournamentCard : Clicks "Register" for a tournament
+TournamentCard -> TournamentPage : onRegister(tournamentId)
+deactivate TournamentCard
+
+TournamentPage -> AuthMgr : getUserId()
+activate AuthMgr
+AuthMgr --> TournamentPage : userId
+deactivate AuthMgr
+
+alt User ID found
+  TournamentPage -> TournamentBackend : registerUserForTournament(tournamentId, {id_user: userId})
+  activate TournamentBackend
+  TournamentBackend -> FetchUtil : fetchJson("/tournaments/{tournamentId}/register", {POST, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "user_token_abc"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /tournaments/{id}/register ({id_user})
+  activate API
+  alt Registration successful
+    API --> FetchUtil : HTTP 200 OK (TournamentRegistration)
+    FetchUtil --> TournamentBackend : TournamentRegistration
+    TournamentBackend --> TournamentPage : TournamentRegistration
+
+    TournamentPage -> Toaster : toast.success("Successfully registered...")
+    activate Toaster
+    deactivate Toaster
+
+    TournamentPage -> QueryClient : invalidateQueries(['eligibleTournaments', userId])
+    TournamentPage -> QueryClient : invalidateQueries(['userTournamentRegistrations', userId])
+    activate QueryClient
+    deactivate QueryClient
+  else Registration failed (e.g., not eligible, already registered)
+    API --> FetchUtil : HTTP Error (e.g., 400, 409)
+    FetchUtil -> TournamentBackend : throws Error
+    TournamentBackend --> TournamentPage : throws Error
+    TournamentPage -> Toaster : toast.error("Registration failed...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate TournamentBackend
+else User ID not found (should not happen due to loader)
+  TournamentPage -> Toaster : toast.error("User not identified...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate TournamentPage
+@enduml

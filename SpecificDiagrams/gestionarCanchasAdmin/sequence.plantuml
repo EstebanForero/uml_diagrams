@@ -1,0 +1,62 @@
+@startuml
+title UC_GestionarCanchasCRUDAdmin (Crear/Editar Cancha): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminCourtsManagementPage" as CourtMgmtPage <<(R,orchid)>>
+participant "CourtCard (existing)" as CourtCardUI <<(C,lightgrey)>>
+participant "CourtCreationDialog" as CourtCreateDialog <<(C,lightgrey)>>
+participant "CourtCreationForm" as CourtFormUI <<(C,lightgrey)>>
+participant "court_backend.ts\ncreateCourt() or updateCourt() (N.B: update not implemented in backend)" as CourtBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+alt Create New Court
+  AdminUser -> CourtMgmtPage : Clicks "Add New Court"
+  CourtMgmtPage -> CourtCreateDialog : Opens dialog
+  activate CourtCreateDialog
+  CourtCreateDialog -> CourtFormUI : Renders court creation form
+  activate CourtFormUI
+  AdminUser -> CourtFormUI : Enters court name
+  AdminUser -> CourtFormUI : Clicks "Create Court" (in DialogFooter)
+  CourtFormUI -> CourtCreateDialog : onSubmit(formData: {court_name})
+  deactivate CourtFormUI
+
+  CourtCreateDialog -> CourtBackend : createCourt({court_name})
+  activate CourtBackend
+  CourtBackend -> FetchUtil : fetchJson("/courts", {POST, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /courts ({court_name})
+  activate API
+  API --> FetchUtil : HTTP 200 OK (Court object)
+  deactivate API
+  FetchUtil --> CourtBackend : Court
+  CourtBackend --> CourtCreateDialog : Court
+  deactivate CourtBackend
+
+  CourtCreateDialog -> Toaster : toast.success("Court created...")
+  activate Toaster
+  deactivate Toaster
+  CourtCreateDialog -> QueryClient : invalidateQueries({queryKey: ['allCourts']})
+  activate QueryClient
+  deactivate QueryClient
+  CourtCreateDialog -> CourtMgmtPage : Closes dialog
+  deactivate CourtCreateDialog
+else Edit Existing Court '(Note: Frontend has no edit UI, backend likely only supports name update if any via PUT /courts)'
+  ' Admin would need a separate "Edit Court" dialog and form similar to create '
+  ' For now, this path is hypothetical based on standard CRUD '
+  AdminUser -> CourtCardUI : (Hypothetical) Clicks "Edit"
+  ' ... similar flow to create but with PUT and pre-filled form ... '
+  ' CatBackend would call updateCourt (if it existed with similar signature to createCourt) '
+  ' API would be PUT /courts/{courtId} '
+end
+
+deactivate CourtMgmtPage
+
+@enduml

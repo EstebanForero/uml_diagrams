@@ -1,0 +1,77 @@
+@startuml
+title UC_GestionarSolicitudesUsuario (Crear Solicitud): Sequence Diagram
+
+actor "Usuario" as User
+participant "UserRequestsPageComponent" as RequestsPage <<(R,orchid)>>
+participant "RequestCreator" as RequestCreatorUI <<(C,lightgrey)>>
+participant "ReusableForm (Request)" as RequestForm <<(C,lightgrey)>>
+participant "request_backend.ts\ncreateRequest()" as RequestBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> RequestsPage : Navigates to /dashboard_user/requests
+activate RequestsPage
+RequestsPage -> RequestCreatorUI : Renders request creation form area
+activate RequestCreatorUI
+RequestCreatorUI -> RequestForm : Renders form fields (title, justification)
+activate RequestForm
+
+User -> RequestForm : Enters "Request title" and "Request justification"
+User -> RequestForm : Clicks "Submit" (Create Request)
+RequestForm -> RequestCreatorUI : onSubmit(values)
+deactivate RequestForm
+
+RequestCreatorUI -> AuthMgr : getUserId()
+activate AuthMgr
+AuthMgr --> RequestCreatorUI : userId
+deactivate AuthMgr
+
+alt User ID found
+  RequestCreatorUI -> RequestBackend : createRequest({requested_command, justification, requester_id: userId})
+  activate RequestBackend
+  RequestBackend -> FetchUtil : fetchJson("/requests", {POST, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "user_token_abc"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /requests (requestData)
+  activate API
+  alt Request created successfully
+    API --> FetchUtil : HTTP 201 CREATED (message or void)
+    FetchUtil --> RequestBackend : (void or success message)
+    RequestBackend --> RequestCreatorUI : (void or success message)
+
+    RequestCreatorUI -> Toaster : toast.success("Request sent successfully")
+    activate Toaster
+    deactivate Toaster
+
+    RequestCreatorUI -> QueryClient : invalidateQueries({queryKey: ['requests', userId]})
+    activate QueryClient
+    QueryClient -> RequestsPage : Triggers refetch of user's requests list
+    deactivate QueryClient
+    RequestCreatorUI -> RequestForm : Resets form (if applicable)
+    activate RequestForm
+    deactivate RequestForm
+  else Error creating request
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> RequestBackend : throws Error
+    RequestBackend --> RequestCreatorUI : throws Error
+    RequestCreatorUI -> Toaster : toast.error("Error sending request...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate RequestBackend
+else User ID not found
+  RequestCreatorUI -> Toaster : toast.error("User ID not found...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate RequestCreatorUI
+deactivate RequestsPage
+@enduml

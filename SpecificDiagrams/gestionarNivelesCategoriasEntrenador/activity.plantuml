@@ -1,0 +1,25 @@
+@startuml
+title UC_GestionarNivelesCategoriasEntrenador: Activity Diagram
+
+start
+:Entrenador navega a "Gestionar Niveles de Usuario en Categorías";
+:Sistema carga lista de todos los usuarios;
+:Entrenador busca o selecciona un Usuario específico;
+:Sistema muestra las categorías en las que el Usuario está registrado y su nivel actual en cada una;
+:Para una categoría específica del Usuario, Entrenador selecciona un nuevo Nivel desde un dropdown;
+if (Nuevo Nivel es diferente al Nivel Actual?) then (sí)
+  :Sistema envía solicitud de actualización de nivel al Backend API\n(ID Usuario, ID Categoría, Nuevo Nivel);
+  if (Actualización Exitosa en Backend?) then (sí)
+    :Backend API actualiza el nivel del usuario en la categoría;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar UI para reflejar el nuevo nivel;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+    :Revertir selección del dropdown al nivel original (opcional);
+  endif
+else (no)
+  :No se realiza ninguna acción;
+endif
+stop
+@enduml

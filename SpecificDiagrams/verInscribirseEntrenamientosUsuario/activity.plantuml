@@ -1,0 +1,25 @@
+@startuml
+title UC_VerInscribirseEntrenamientosUsuario (Inscribirse): Activity Diagram
+
+start
+:Usuario navega a la página de Entrenamientos del Usuario;
+:Sistema carga y muestra:
+  - Entrenamientos Elegibles
+  - Entrenamientos Registrados (con estado de asistencia);
+:Usuario identifica un Entrenamiento Elegible;
+:Usuario hace clic en "Registrarse" para ese entrenamiento;
+if (Usuario autenticado y con ID?) then (sí)
+  :Sistema envía solicitud de registro al Backend API\n(ID Entrenamiento, ID Usuario);
+  if (Registro Exitoso en Backend?) then (sí)
+    :Backend API confirma registro y retorna datos de la inscripción;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar lista de Entrenamientos Elegibles y Registrados;
+  else (no - no elegible, error, etc.)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+else (no)
+  :Mostrar mensaje de error "Usuario no identificado";
+endif
+stop
+@enduml

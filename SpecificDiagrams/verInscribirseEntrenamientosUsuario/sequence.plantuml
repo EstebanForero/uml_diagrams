@@ -1,0 +1,75 @@
+@startuml
+title UC_VerInscribirseEntrenamientosUsuario (Inscribirse): Sequence Diagram
+
+actor "Usuario" as User
+participant "UserTrainingPageComponent" as TrainingPage <<(R,orchid)>>
+participant "AvailableTrainingCard" as AvailTrainingCard <<(C,lightgrey)>>
+participant "training_backend.ts\nregisterUserForTraining()" as TrainingBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> TrainingPage : Navigates to /dashboard_user/training
+activate TrainingPage
+TrainingPage -> QueryClient : useQuery(['eligibleTrainings', userId])
+TrainingPage -> QueryClient : useQuery(['userTrainingRegistrations', userId])
+TrainingPage -> QueryClient : useQuery(['allTrainings'])
+' ... Initial data loading ... '
+TrainingPage -> TrainingPage : Determines 'availableTrainings' list
+
+TrainingPage -> AvailTrainingCard : Renders available training card
+activate AvailTrainingCard
+
+User -> AvailTrainingCard : Clicks "Register" for a training
+AvailTrainingCard -> TrainingPage : onRegister(trainingId)
+deactivate AvailTrainingCard
+
+TrainingPage -> AuthMgr : getUserId()
+activate AuthMgr
+AuthMgr --> TrainingPage : userId
+deactivate AuthMgr
+
+alt User ID found
+  TrainingPage -> TrainingBackend : registerUserForTraining(trainingId, {id_user: userId})
+  activate TrainingBackend
+  TrainingBackend -> FetchUtil : fetchJson("/trainings/{trainingId}/register/{userId}", {POST})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "user_token_abc"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /trainings/{id}/register/{userId}
+  activate API
+  alt Registration successful
+    API --> FetchUtil : HTTP 200 OK (TrainingRegistration)
+    FetchUtil --> TrainingBackend : TrainingRegistration
+    TrainingBackend --> TrainingPage : TrainingRegistration
+
+    TrainingPage -> Toaster : toast.success("Successfully registered! Registered on: ...")
+    activate Toaster
+    deactivate Toaster
+
+    TrainingPage -> QueryClient : invalidateQueries(['eligibleTrainings', userId])
+    TrainingPage -> QueryClient : invalidateQueries(['userTrainingRegistrations', userId])
+    activate QueryClient
+    deactivate QueryClient
+  else Registration failed
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> TrainingBackend : throws Error
+    TrainingBackend --> TrainingPage : throws Error
+    TrainingPage -> Toaster : toast.error("Registration failed...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate TrainingBackend
+else User ID not found
+  TrainingPage -> Toaster : toast.error("User not identified...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate TrainingPage
+@enduml

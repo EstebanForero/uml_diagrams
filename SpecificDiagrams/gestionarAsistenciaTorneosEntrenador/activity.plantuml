@@ -1,0 +1,29 @@
+@startuml
+title UC_GestionarAsistenciaTorneosEntrenador: Activity Diagram
+
+start
+:Entrenador navega a la página de Torneos (Entrenador);
+:Sistema carga y muestra lista de Torneos;
+:Entrenador selecciona un Torneo y hace clic en "Gestionar Asistencia";
+:Sistema muestra diálogo con lista de usuarios registrados en el Torneo y su estado de asistencia actual;
+:Entrenador selecciona un Usuario de la lista;
+:Sistema habilita formulario para ingresar posición del Usuario;
+:Entrenador ingresa la Posición;
+:Entrenador hace clic en "Guardar Asistencia";
+:Validar datos de Posición (número positivo, único si es > 0);
+if (Datos de Posición Válidos?) then (sí)
+  :Sistema envía datos de asistencia (ID Torneo, ID Usuario, Posición) al Backend API;
+  if (Registro de Asistencia Exitoso en Backend?) then (sí)
+    :Backend API confirma registro de asistencia;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar lista de asistencia en el diálogo;
+    :Resetear formulario de asistencia;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast y/o en formulario);
+  endif
+else (no - datos de posición inválidos)
+  :Mostrar mensaje de error en formulario de asistencia;
+endif
+stop
+@enduml

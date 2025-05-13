@@ -1,0 +1,83 @@
+@startuml
+title UC_GestionarUsuariosCRUDAdmin (Editar Usuario): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminUserListPage" as UserListPage <<(R,orchid)>>
+participant "UsersTable" as UsersTableUI <<(C,lightgrey)>>
+participant "UserEditDialog" as UserEditDialogUI <<(C,lightgrey)>>
+participant "UserEditForm" as UserEditFormUI <<(C,lightgrey)>>
+participant "user_backend.ts\nupdateUser()" as UserBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> UserListPage : Navigates to /dashboard_admin/user_management
+activate UserListPage
+UserListPage -> QueryClient : useQuery(['allUsers'])
+' ... Load all users ... '
+UserListPage -> UsersTableUI : Renders table of users
+activate UsersTableUI
+
+AdminUser -> UsersTableUI : Clicks "Edit" for a specific user
+UsersTableUI -> UserListPage : onEditUser(userId)
+UserListPage -> UserEditDialogUI : Opens dialog (isOpen=true, userId)
+activate UserEditDialogUI
+
+UserEditDialogUI -> QueryClient : useQuery(['user', userId]) ' To get current user data for form '
+' ... Load specific user data ... '
+UserEditDialogUI -> UserEditFormUI : Renders user edit form, pre-filled with userData
+activate UserEditFormUI
+
+AdminUser -> UserEditFormUI : Modifies user details (name, email, etc., optionally password)
+AdminUser -> UserEditFormUI : Clicks "Save Changes" (submit)
+UserEditFormUI -> UserEditDialogUI : onSubmit(formData)
+deactivate UserEditFormUI
+
+alt User ID is valid
+  UserEditDialogUI -> UserBackend : updateUser(userId, userCreationPayload)
+  activate UserBackend
+  UserBackend -> FetchUtil : fetchJson("/users/{userId}", {PUT, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : PUT /users/{userId} (userCreationPayload)
+  activate API
+  alt User updated successfully
+    API --> FetchUtil : HTTP 200 OK (UserInfo)
+    FetchUtil --> UserBackend : UserInfo
+    UserBackend --> UserEditDialogUI : UserInfo
+
+    UserEditDialogUI -> Toaster : toast.success("User updated successfully!")
+    activate Toaster
+    deactivate Toaster
+
+    UserEditDialogUI -> QueryClient : invalidateQueries({queryKey: ['allUsers']})
+    UserEditDialogUI -> QueryClient : invalidateQueries({queryKey: ['user', userId]})
+    activate QueryClient
+    QueryClient -> UserListPage : Triggers refetch of users list
+    deactivate QueryClient
+    UserEditDialogUI -> UserListPage : Closes dialog (onOpenChange(false))
+  else Error updating user
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> UserBackend : throws Error
+    UserBackend --> UserEditDialogUI : throws Error
+    UserEditDialogUI -> Toaster : toast.error("Failed to update user...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate UserBackend
+else User ID missing (should not happen with dialog flow)
+  UserEditDialogUI -> Toaster : toast.error("Cannot update: User ID is missing.")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate UserEditDialogUI
+deactivate UsersTableUI
+deactivate UserListPage
+@enduml

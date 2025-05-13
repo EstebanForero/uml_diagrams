@@ -1,0 +1,24 @@
+@startuml
+title UC_ConsultarReportesUsuariosEntrenador: Activity Diagram
+
+start
+:Entrenador navega a la página de Búsqueda de Reportes;
+:Sistema carga lista de todos los usuarios (para búsqueda);
+:Entrenador ingresa un email (o parte de él) en el campo de búsqueda;
+:Sistema filtra (localmente) la lista de usuarios según el email ingresado;
+:Sistema muestra los usuarios coincidentes en una tabla;
+if (Usuario encontrado y Entrenador hace clic en "Ver Reporte"?) then (sí)
+  :Sistema navega a la página de Reporte del Usuario Específico (usando ID de usuario);
+  :Página de Reporte solicita el reporte completo del usuario al Backend API;
+  if (Reporte Encontrado y Cargado Exitosamente?) then (sí)
+    :Backend API retorna los datos del reporte;
+    :Sistema muestra el reporte detallado del usuario;
+  else (no - reporte no existe o error)
+    :Backend API retorna error;
+    :Sistema muestra mensaje de error en la página de reporte;
+  endif
+else (no - no hay coincidencias o no hace clic)
+  :Entrenador puede refinar la búsqueda o abandonar;
+endif
+stop
+@enduml

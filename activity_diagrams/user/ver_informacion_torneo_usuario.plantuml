@@ -1,8 +1,0 @@
-@startuml
-title Actor: Usuario
-start
-:Seleccionar "Ver mis torneos";
-:Obtener datos de torneos;
-:Mostrar información de torneos;
-stop
-@enduml

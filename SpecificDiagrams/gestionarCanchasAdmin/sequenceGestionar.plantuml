@@ -1,0 +1,77 @@
+@startuml
+title UC_GestionarCanchasCRUDAdmin (Ver Reservas de Cancha): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminCourtsManagementPage" as CourtMgmtPage <<(R,orchid)>>
+participant "CourtCard" as CourtCardUI <<(C,lightgrey)>>
+participant "CourtReservationsDialog" as ReservationsDialog <<(C,lightgrey)>>
+participant "Input (Date Filter)" as DateFilterInput <<(C,lightgrey)>>
+participant "court_backend.ts\ngetReservationsForCourt()" as CourtBackendReservations <<(F,yellow)>>
+participant "utils.ts\nconvertLocalToUtcString()" as DateUtilLocalToUtc <<(F,lightgreen)>>
+participant "utils.ts\ndisplayUtcAsLocal()" as DateUtilUtcToLocal <<(F,lightgreen)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+
+AdminUser -> CourtMgmtPage : Navigates to /dashboard_admin/courts_management
+activate CourtMgmtPage
+' ... Loads list of courts ... '
+CourtMgmtPage -> CourtCardUI : Renders Court Cards
+
+AdminUser -> CourtCardUI : Clicks "View Reservations" for a court
+CourtCardUI -> CourtMgmtPage : onViewReservations(court)
+CourtMgmtPage -> ReservationsDialog : Opens dialog (selectedCourtForReservations=court)
+activate ReservationsDialog
+
+ReservationsDialog -> QueryClient : useQuery(['courtReservations', courtId, startDateFilter, endDateFilter])
+activate QueryClient
+QueryClient -> CourtBackendReservations : getReservationsForCourt(courtId, {start_datetime_filter, end_datetime_filter})
+activate CourtBackendReservations
+alt Filters provided
+  ReservationsDialog -> DateFilterInput : Admin enters/changes date filters
+  DateFilterInput -> ReservationsDialog : Updates startDateFilter, endDateFilter
+  ReservationsDialog -> CourtBackendReservations : (Calls refetch via queryKey change)
+  CourtBackendReservations -> DateUtilLocalToUtc : convertLocalToUtcString(localFilterStart)
+  activate DateUtilLocalToUtc
+  DateUtilLocalToUtc --> CourtBackendReservations : utcFilterStart
+  deactivate DateUtilLocalToUtc
+  CourtBackendReservations -> DateUtilLocalToUtc : convertLocalToUtcString(localFilterEnd)
+  activate DateUtilLocalToUtc
+  DateUtilLocalToUtc --> CourtBackendReservations : utcFilterEnd
+  deactivate DateUtilLocalToUtc
+  CourtBackendReservations -> FetchUtil : fetchJson("/courts/{id}/reservations?start_datetime_filter={utcStart}&end_datetime_filter={utcEnd}")
+else No filters
+  CourtBackendReservations -> FetchUtil : fetchJson("/courts/{id}/reservations")
+end
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "admin_token_xyz"
+deactivate AuthMgr
+FetchUtil -> API : GET /courts/{id}/reservations?params
+activate API
+API --> FetchUtil : HTTP 200 OK (CourtReservation[] with UTC dates)
+deactivate API
+FetchUtil --> CourtBackendReservations : CourtReservation[] (UTC)
+loop for each reservation
+  CourtBackendReservations -> DateUtilUtcToLocal : displayUtcAsLocal(reservation.start_reservation_datetime)
+  activate DateUtilUtcToLocal
+  DateUtilUtcToLocal --> CourtBackendReservations : local_start_datetime
+  deactivate DateUtilUtcToLocal
+  CourtBackendReservations -> DateUtilUtcToLocal : displayUtcAsLocal(reservation.end_reservation_datetime)
+  activate DateUtilUtcToLocal
+  DateUtilUtcToLocal --> CourtBackendReservations : local_end_datetime
+  deactivate DateUtilUtcToLocal
+end
+CourtBackendReservations --> QueryClient : CourtReservation[] (local dates)
+deactivate CourtBackendReservations
+QueryClient --> ReservationsDialog : CourtReservation[] (local dates)
+deactivate QueryClient
+ReservationsDialog -> ReservationsDialog : Renders table of reservations
+
+AdminUser -> ReservationsDialog : Clicks "Close"
+ReservationsDialog -> CourtMgmtPage : Closes dialog
+deactivate ReservationsDialog
+deactivate CourtMgmtPage
+@enduml

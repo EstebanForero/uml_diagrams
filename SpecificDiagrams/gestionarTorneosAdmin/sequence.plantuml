@@ -1,0 +1,85 @@
+@startuml
+title UC_GestionarTorneosCRUDAdmin (Crear Torneo): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "TournamentManagement" as TournamentMgmtPage <<(R,orchid)>>
+participant "TournamentCreation" as TournamentCreationDialog <<(C,lightgrey)>>
+participant "TournamentForm" as TournamentForm <<(C,lightgrey)>>
+participant "tournament_backend.ts\ncreateTournament()" as TournamentBackend <<(F,yellow)>>
+participant "utils.ts\nconvertLocalToUtcString()" as DateUtil <<(F,lightgreen)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> TournamentMgmtPage : Navigates to /dashboard_admin/tournament_management
+activate TournamentMgmtPage
+' ... Initial load of tournaments ... '
+
+AdminUser -> TournamentMgmtPage : Clicks "Create Tournament" button
+TournamentMgmtPage -> TournamentCreationDialog : Opens dialog (isOpen=true)
+activate TournamentCreationDialog
+TournamentCreationDialog -> TournamentForm : Renders tournament creation form
+activate TournamentForm
+
+AdminUser -> TournamentForm : Enters tournament details (name, category, court, start/end datetimes (local))
+AdminUser -> TournamentForm : Clicks "Create Tournament" (in DialogFooter)
+TournamentForm -> TournamentCreationDialog : onSubmit(formData)
+deactivate TournamentForm
+
+TournamentCreationDialog -> TournamentBackend : createTournament(payload)
+activate TournamentBackend
+TournamentBackend -> DateUtil : convertLocalToUtcString(formData.start_datetime)
+activate DateUtil
+DateUtil --> TournamentBackend : utc_start_datetime
+deactivate DateUtil
+TournamentBackend -> DateUtil : convertLocalToUtcString(formData.end_datetime)
+activate DateUtil
+DateUtil --> TournamentBackend : utc_end_datetime
+deactivate DateUtil
+
+TournamentBackend -> FetchUtil : fetchJson("/tournaments", {POST, body: utcPayload})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "admin_token_xyz"
+deactivate AuthMgr
+FetchUtil -> API : POST /tournaments (utcPayload)
+activate API
+alt Tournament created successfully
+  API --> FetchUtil : HTTP 200 OK (Tournament object with UTC datetimes)
+  FetchUtil --> TournamentBackend : Tournament (UTC)
+  TournamentBackend -> DateUtil : displayUtcAsLocal(Tournament.start_datetime)
+  activate DateUtil
+  DateUtil --> TournamentBackend : local_start_datetime
+  deactivate DateUtil
+  TournamentBackend -> DateUtil : displayUtcAsLocal(Tournament.end_datetime)
+  activate DateUtil
+  DateUtil --> TournamentBackend : local_end_datetime
+  deactivate DateUtil
+  ' TournamentBackend now has Tournament object with local datetimes '
+  TournamentBackend --> TournamentCreationDialog : Tournament (local)
+
+  TournamentCreationDialog -> Toaster : toast.success("Tournament created...")
+  activate Toaster
+  deactivate Toaster
+
+  TournamentCreationDialog -> QueryClient : invalidateQueries({queryKey: ['tournaments']})
+  activate QueryClient
+  deactivate QueryClient
+  TournamentCreationDialog -> TournamentMgmtPage : Closes dialog (setIsOpen(false))
+else Error creating tournament
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> TournamentBackend : throws Error
+  TournamentBackend --> TournamentCreationDialog : throws Error
+  TournamentCreationDialog -> Toaster : toast.error("Failed to create tournament...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate TournamentBackend
+deactivate TournamentCreationDialog
+deactivate TournamentMgmtPage
+@enduml

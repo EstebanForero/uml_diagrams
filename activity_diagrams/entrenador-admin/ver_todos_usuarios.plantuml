@@ -1,8 +1,0 @@
-@startuml
-title Actores: Admin y Entrenador
-start
-:Seleccionar "Ver todos los usuarios";
-:Obtener todos los usuarios;
-:Mostrar lista de usuarios;
-stop
-@enduml

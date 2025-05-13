@@ -1,0 +1,84 @@
+@startuml
+title UC_IniciarSesion: Sequence Diagram
+
+actor "Usuario" as User
+participant "LoginRouteComponent" as LoginPage <<(R,orchid)>>
+participant "ReusableForm (Login)" as LoginForm <<(C,lightgrey)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "user_backend.ts\nlogInUser()" as UserBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "TanStackRouter" as Router <<(S,lightgreen)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> LoginPage : Navigates to /auth/login
+activate LoginPage
+
+LoginPage -> AuthMgr : getLogInInfo()
+activate AuthMgr
+alt User not authenticated
+  AuthMgr --> LoginPage : null
+else User already authenticated
+  AuthMgr --> LoginPage : OnLogInInfo
+  LoginPage -> Router : navigateToRol(user_rol)
+  activate Router
+  Router --> User : Redirects to Dashboard
+  deactivate Router
+  deactivate AuthMgr
+  deactivate LoginPage
+  User <-- Router
+end
+deactivate AuthMgr
+
+LoginPage -> LoginForm : Renders login form
+activate LoginForm
+
+User -> LoginForm : Enters identifier & password
+User -> LoginForm : Clicks "Login" button
+LoginForm -> LoginPage : onSubmit(values)
+deactivate LoginForm
+
+LoginPage -> UserBackend : logInUser(credentials)
+activate UserBackend
+UserBackend -> FetchUtil : fetchJson("/users/login", {POST, body})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken() ' (will be null/empty for login)
+activate AuthMgr
+AuthMgr --> FetchUtil : ""
+deactivate AuthMgr
+FetchUtil -> API : POST /users/login (credentials)
+activate API
+alt Login successful
+  API --> FetchUtil : HTTP 200 OK (token, user_rol, user_id)
+  FetchUtil --> UserBackend : {token, user_rol, user_id}
+  UserBackend --> LoginPage : {token, user_rol, user_id}
+
+  LoginPage -> Toaster : toast.success("Login successful")
+  activate Toaster
+  deactivate Toaster
+
+  LoginPage -> AuthMgr : login(token, user_rol, user_id)
+  activate AuthMgr
+  AuthMgr -> localStorage : Store Auth Info
+  deactivate AuthMgr
+
+  LoginPage -> Router : navigateToRol(user_rol)
+  activate Router
+  Router --> User : Navigates to Dashboard
+  deactivate Router
+else Login failed (e.g., invalid credentials)
+  API --> FetchUtil : HTTP 401 Unauthorized (or other error)
+  FetchUtil -> UserBackend : throws Error
+  UserBackend -> LoginPage : throws Error
+  LoginPage -> LoginForm : setError("root", "Invalid credentials")
+  activate LoginForm
+  deactivate LoginForm
+  LoginPage -> Toaster : toast.error("Invalid credentials")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate UserBackend
+deactivate LoginPage
+@enduml

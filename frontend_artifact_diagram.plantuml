@@ -1,0 +1,112 @@
+@startuml
+title Frontend TypeScript Artifacts
+skinparam artifact {
+  BackgroundColor LightSkyBlue
+  BorderColor Blue
+  FontStyle bold
+}
+
+artifact "auth.ts" as auth_ts
+artifact "category_backend.ts" as category_backend_ts
+artifact "common.ts" as common_ts
+artifact "court_backend.ts" as court_backend_ts
+artifact "report_backend.ts" as report_backend_ts
+artifact "request_backend.ts" as request_backend_ts
+artifact "tournament_backend.ts" as tournament_backend_ts
+artifact "training_backend.ts" as training_backend_ts
+artifact "tuition_backend.ts" as tuition_backend_ts
+artifact "user_backend.ts" as user_backend_ts
+artifact "utils.ts" as utils_ts
+
+artifact "AdminTournamentDetailsDialog.tsx" as AdminTournamentDetailsDialog_tsx
+artifact "AdminTrainingRegistrationRow.tsx" as AdminTrainingRegistrationRow_tsx
+artifact "AdminTrainingRegistrationsDialog.tsx" as AdminTrainingRegistrationsDialog_tsx
+artifact "AdminUserCategoryCard.tsx" as AdminUserCategoryCard_tsx
+artifact "AppSideBar.tsx" as AppSideBar_tsx
+artifact "AttendanceRow.tsx" as AttendanceRow_tsx
+artifact "AttendanceUserRow.tsx" as AttendanceUserRow_tsx
+artifact "AttendedTournamentCard.tsx" as AttendedTournamentCard_tsx
+artifact "AvailableTrainingCard.tsx" as AvailableTrainingCard_tsx
+artifact "CategoryComponent.tsx" as CategoryComponent_tsx
+artifact "CategoryFormDialog.tsx" as CategoryFormDialog_tsx
+artifact "CategoryManagement.tsx" as CategoryManagement_tsx
+artifact "CategoryRequirementDialog.tsx" as CategoryRequirementDialog_tsx
+artifact "CategorySelector.tsx" as CategorySelector_tsx
+artifact "CourtCard.tsx" as CourtCard_tsx
+artifact "CourtCreationForm.tsx" as CourtCreationForm_tsx
+artifact "CourtReservationsDialog.tsx" as CourtReservationsDialog_tsx
+artifact "CourtSelector.tsx" as CourtSelector_tsx
+artifact "EventCourtBadge.tsx" as EventCourtBadge_tsx
+artifact "NavBarComponent.tsx" as NavBarComponent_tsx
+artifact "PaymentOptions.tsx" as PaymentOptions_tsx
+artifact "PremadeRequest.tsx" as PremadeRequest_tsx
+artifact "ProfileComponent.tsx" as ProfileComponent_tsx
+artifact "RegisteredTournamentCard.tsx" as RegisteredTournamentCard_tsx
+artifact "RegisteredTrainingCard.tsx" as RegisteredTrainingCard_tsx
+artifact "RegistrationRow.tsx" as RegistrationRow_tsx
+artifact "RequestCreator.tsx" as RequestCreator_tsx
+artifact "RequestVisualizer.tsx" as RequestVisualizer_tsx
+artifact "ReusableForm.tsx" as ReusableForm_tsx
+artifact "TournamentAttendaceDialog.tsx" as TournamentAttendaceDialog_tsx
+artifact "TournamentComponent.tsx" as TournamentComponent_tsx
+artifact "TournamentCreation.tsx" as TournamentCreation_tsx
+artifact "TournamentEdit.tsx" as TournamentEdit_tsx
+artifact "TournamentForm.tsx" as TournamentForm_tsx
+artifact "TournamentManagement.tsx" as TournamentManagement_tsx
+artifact "TrainerSelector.tsx" as TrainerSelector_tsx
+artifact "TrainerTournamentCard.tsx" as TrainerTournamentCard_tsx
+artifact "TrainerTrainingCard.tsx" as TrainerTrainingCard_tsx
+artifact "TrainingComponent.tsx" as TrainingComponent_tsx
+artifact "TrainingCreation.tsx" as TrainingCreation_tsx
+artifact "TrainingEdit.tsx" as TrainingEdit_tsx
+artifact "TrainingForm.tsx" as TrainingForm_tsx
+artifact "TrainingManagementDialog.tsx" as TrainingManagementDialog_tsx
+artifact "TuitionDetails.tsx" as TuitionDetails_tsx
+artifact "UserCategoryManagementCard.tsx" as UserCategoryManagementCard_tsx
+artifact "UserEditDialog.tsx" as UserEditDialog_tsx
+artifact "UserEditForm.tsx" as UserEditForm_tsx
+artifact "UserReportDisplay.tsx" as UserReportDisplay_tsx
+artifact "UserTournamentCard.tsx" as UserTournamentCard_tsx
+artifact "UsersTable.tsx" as UsersTable_tsx
+
+artifact "use-mobile.ts" as use_mobile_ts
+artifact "utils.ts (lib)" as lib_utils_ts
+
+artifact "main.tsx" as main_tsx
+artifact "routeTree.gen.ts" as routeTree_gen_ts
+artifact "__root.tsx" as __root_tsx
+
+artifact "auth/login.tsx" as auth_login_tsx
+artifact "auth/signin.tsx" as auth_signin_tsx
+
+artifact "dashboard_admin/category_management.tsx" as da_cat_mgmt_tsx
+artifact "dashboard_admin/category_user.tsx" as da_cat_user_tsx
+artifact "dashboard_admin/courts_management.tsx" as da_courts_mgmt_tsx
+artifact "dashboard_admin/index.tsx" as da_index_tsx
+artifact "dashboard_admin/requests.tsx" as da_requests_tsx
+artifact "dashboard_admin/role_management.tsx" as da_role_mgmt_tsx
+artifact "dashboard_admin/tournament_management.tsx" as da_tour_mgmt_tsx
+artifact "dashboard_admin/training_management.tsx" as da_train_mgmt_tsx
+artifact "dashboard_admin/user_management.tsx" as da_user_mgmt_tsx
+artifact "dashboard_admin.tsx" as da_layout_tsx
+
+artifact "dashboard_trainer/index.tsx" as dt_index_tsx
+artifact "dashboard_trainer/reports/$userId.tsx" as dt_reports_user_tsx
+artifact "dashboard_trainer/reports/index.tsx" as dt_reports_index_tsx
+artifact "dashboard_trainer/tournament.tsx" as dt_tournament_tsx
+artifact "dashboard_trainer/trainings.tsx" as dt_trainings_tsx
+artifact "dashboard_trainer/user_categories.tsx" as dt_user_cats_tsx
+artifact "dashboard_trainer.tsx" as dt_layout_tsx
+
+artifact "dashboard_user/categories.tsx" as du_categories_tsx
+artifact "dashboard_user/index.tsx" as du_index_tsx
+artifact "dashboard_user/requests.tsx" as du_requests_tsx
+artifact "dashboard_user/tournament.tsx" as du_tournament_tsx
+artifact "dashboard_user/training.tsx" as du_training_tsx
+artifact "dashboard_user/tuition.tsx" as du_tuition_tsx
+artifact "dashboard_user.tsx" as du_layout_tsx
+
+artifact "index.tsx (routes)" as routes_index_tsx
+artifact "vite.config.ts" as vite_config_ts
+
+@enduml

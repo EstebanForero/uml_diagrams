@@ -1,0 +1,29 @@
+@startuml
+title UC_GestionarTorneosCRUDAdmin (Crear Torneo): Activity Diagram
+
+start
+:Admin navega a Gestión de Torneos;
+:Sistema muestra lista de torneos existentes;
+:Admin hace clic en "Crear Torneo";
+:Sistema muestra Formulario de Creación de Torneo;
+:Admin ingresa datos del torneo (nombre, categoría, cancha, fechas/horas inicio y fin LOCALES);
+:Admin envía formulario;
+:Validar datos de entrada (frontend - Zod);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario;
+else (no)
+  :Convertir fechas/horas locales a UTC;
+  :Sistema envía datos del nuevo torneo (con fechas UTC) al Backend API;
+  if (Creación Exitosa en Backend?) then (sí)
+    :Backend API retorna datos del torneo creado (con fechas UTC);
+    :Convertir fechas UTC del torneo a locales para visualización;
+    :Mostrar mensaje de éxito (Toast);
+    :Cerrar diálogo de creación;
+    :Actualizar lista de torneos en la página;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

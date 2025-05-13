@@ -1,0 +1,62 @@
+@startuml
+title UC_GestionarCanchasCRUDAdmin: Activity Diagram
+
+start
+:Admin navega a Gestión de Canchas;
+:Sistema muestra lista de canchas existentes;
+
+if (¿Qué desea hacer el Admin?) then
+  -->[Crear Cancha]
+    :Admin hace clic en "Añadir Nueva Cancha";
+    :Sistema muestra Formulario de Creación de Cancha;
+    :Admin ingresa nombre de la cancha;
+    :Admin envía formulario;
+    :Validar datos (frontend - Zod: nombre no vacío);
+    if (Datos inválidos?) then (sí)
+      :Mostrar error en formulario;
+    else (no)
+      :Sistema envía datos al Backend API para crear cancha;
+      if (Creación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Actualizar lista de canchas;
+        :Cerrar diálogo;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    endif
+
+elseif (Eliminar Cancha) then
+    :Admin selecciona una cancha y hace clic en "Eliminar";
+    :Sistema muestra Diálogo de Confirmación;
+    if (Admin confirma eliminación?) then (sí)
+      :Sistema envía solicitud de eliminación al Backend API;
+      if (Eliminación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Eliminar cancha de la lista;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    else (no)
+      :Cancelar eliminación;
+    endif
+
+else (Ver Reservas de Cancha)
+    :Admin selecciona una cancha y hace clic en "Ver Reservas";
+    :Sistema muestra Diálogo de Reservas para esa cancha;
+    :Admin (opcionalmente) ingresa filtros de fecha/hora (LOCALES);
+    :Admin (opcionalmente) hace clic en "Aplicar Filtros";
+    :Convertir fechas/horas de filtro locales a UTC (si existen);
+    :Sistema solicita al Backend API las reservas de la cancha (con filtros UTC opcionales);
+    if (Reservas Cargadas Exitosamente?) then (sí)
+      :Backend API retorna lista de reservas (con fechas UTC);
+      :Convertir fechas UTC de las reservas a locales;
+      :Sistema muestra la tabla de reservas (con fechas LOCALES);
+    else (no - error al cargar)
+      :Mostrar mensaje de error en el diálogo;
+    endif
+    :Admin cierra diálogo de reservas;
+
+endif
+
+stop
+@enduml

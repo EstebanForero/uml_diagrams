@@ -1,0 +1,75 @@
+@startuml
+title UC_GestionarAsignacionCategoriasAdmin (Remover Usuario de Categoría): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminUserCategoryPage" as AdminCatUserPage <<(R,orchid)>>
+participant "Input (Email Search)" as EmailSearchInput <<(C,lightgrey)>>
+participant "AdminUserCategoryCard" as UserCatCard <<(C,lightgrey)>>
+participant "AlertDialog (Confirm Remove)" as ConfirmDialog <<(C,lightgrey)>>
+participant "category_backend.ts\ndeleteUserFromCategory()" as CategoryBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+AdminUser -> AdminCatUserPage : Navigates to /dashboard_admin/category_user
+activate AdminCatUserPage
+AdminCatUserPage -> QueryClient : useQuery(['allUsersForAdminCategoryMgmt'])
+' ... Load all users for searching ... '
+
+AdminUser -> EmailSearchInput : Enters user email to search
+EmailSearchInput -> AdminCatUserPage : onChange(searchValue)
+AdminCatUserPage -> AdminCatUserPage : Filters users based on searchEmail
+AdminCatUserPage -> UserCatCard : Renders card for the found user(s)
+activate UserCatCard
+UserCatCard -> QueryClient : useQuery(['userCategoriesAdmin', user.id_user]) ' To get user's current categories '
+UserCatCard -> QueryClient : useQuery(['allCategories']) ' To get category names '
+' ... Data loading for the card ... '
+UserCatCard -> UserCatCard : Displays user's categories with "Remove" buttons
+
+AdminUser -> UserCatCard : Clicks "Trash" icon (Remove) for a specific category
+UserCatCard -> ConfirmDialog : Opens AlertDialog to confirm removal
+activate ConfirmDialog
+
+AdminUser -> ConfirmDialog : Clicks "Yes, Remove"
+ConfirmDialog -> UserCatCard : handleDeleteClick(categoryId)
+deactivate ConfirmDialog
+
+UserCatCard -> CategoryBackend : deleteUserFromCategory(categoryId, userId)
+activate CategoryBackend
+CategoryBackend -> FetchUtil : fetchJson("/categories/{catId}/user/{userId}", {DELETE})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "admin_token_xyz"
+deactivate AuthMgr
+FetchUtil -> API : DELETE /categories/{catId}/user/{userId}
+activate API
+alt Removal successful
+  API --> FetchUtil : HTTP 200 OK (message string or void)
+  FetchUtil --> CategoryBackend : (void or success message)
+  CategoryBackend --> UserCatCard : (void or success message)
+
+  UserCatCard -> Toaster : toast.success("User removed from category...")
+  activate Toaster
+  deactivate Toaster
+
+  UserCatCard -> QueryClient : invalidateQueries({queryKey: ['userCategoriesAdmin', userId]})
+  activate QueryClient
+  QueryClient -> UserCatCard : Triggers refetch of user's categories, UI updates
+  deactivate QueryClient
+else Error removing user
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> CategoryBackend : throws Error
+  CategoryBackend --> UserCatCard : throws Error
+  UserCatCard -> Toaster : toast.error("Failed to remove from category...")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate CategoryBackend
+deactivate UserCatCard
+deactivate AdminCatUserPage
+@enduml

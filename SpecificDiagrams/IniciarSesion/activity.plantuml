@@ -1,0 +1,31 @@
+@startuml
+title UC_IniciarSesion: Activity Diagram
+
+start
+:Usuario navega a la página de Login;
+if (Usuario ya autenticado?) then (sí)
+  :Redirigir al Dashboard correspondiente;
+  stop
+else (no)
+endif
+:Mostrar Formulario de Login;
+:Usuario ingresa credenciales (identificador, contraseña);
+:Usuario envía formulario;
+:Validar datos de entrada (frontend);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario;
+  stop
+else (no)
+  :Sistema envía credenciales al Backend API;
+  if (Autenticación Exitosa en Backend?) then (sí)
+    :Backend API retorna token y datos de usuario (rol, ID);
+    :Guardar token y datos de usuario en AuthManager (localStorage);
+    :Mostrar mensaje de éxito (Toast);
+    :Redirigir al Dashboard correspondiente al rol;
+  else (no - credenciales incorrectas o error)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast y/o formulario);
+  endif
+endif
+stop
+@enduml

@@ -1,181 +1,397 @@
 @startuml
-' Define packages to organize the structure
-package "Backend Entities" {
-  ' Auth-related classes
-  class UserCreationInfo {
-    +nombre: string
-    +contrasena: string
-    +correo: string
-    +telefono: number
-    +identificacion: string
-    +nombre_tipo_identificacion: string
-  }
 
-  class LogInInfo {
-    +identificacion: string
-    +contrasena: string
-  }
+skinparam classAttributeIconSize 0
+hide emptymembers
+hide circle
 
-  class UserInfo {
-    +id_persona: string
-    +nombre: string
-    +correo: string
-    +telefono: number
-    +identificacion: string
-    +nombre_tipo_identificacion: string
-    +nombre_rol: UserRol
-  }
+package BackendCommon {
+    enum LevelName {
+        BEGINNER
+        AMATEUR
+        PROFESSIONAL
+    }
 
-  class UserSelectionInfo {
-    +id_persona: string
-    +nombre: string
-    +correo: string
-    +telefono: number
-    +identificacion: string
-    +nombre_tipo_identificacion: string
-    +nombre_rol: UserRol
-    +matricula_valida: boolean
-  }
+    enum IdType {
+        CC
+    }
 
-  class UserUpdationInfo {
-    +nombre: string
-    +correo: string
-    +telefono: number
-    +identificacion: string
-    +nombre_tipo_identificacion: string
-  }
-
-  enum UserRol {
-    Usuario
-    Admin
-    Entrenador
-  }
-
-  ' Tournament-related classes
-  class Tournament {
-    +id_torneo: string
-    +nombre: string
-  }
-
-  class UserTournamentInfo {
-    +id_torneo: string
-    +nombre: string
-    +puesto: number
-  }
-
-  class UserTournamentRegistration {
-    +nombre: string
-    +id_persona: string
-    +id_torneo: string
-    +puesto: number
-  }
-
-  ' Training-related classes
-  class Training {
-    +id_entrenamiento: string
-    +tiempo_minutos: number
-    +nombre_entrenamiento: string
-  }
-
-  class TrainingRegistration {
-    +id_entrenamiento: string
-    +id_persona: string
-  }
-
-  class TrainingInfo {
-    +tiempo_minutos: number
-    +nombre_entrenamiento: string
-  }
-
-  ' Tuition-related classes
-  class Tuition {
-    +id_persona: string
-    +monto_usd: number
-    +fecha_inscripccion: string
-  }
-
-  class TuitionInfo {
-    +id_persona: string
-    +monto_usd: number
-  }
-
-  ' Request-related classes
-  class RequestCommand {
-    +requester_id: string
-    +request_id: string
-    +command_name: string
-    +command_content: RequestContent
-    +aprover_id: string
-    +completed: boolean
-  }
-
-  interface RequestContent {
-    +type: CommandType
-  }
-
-  class UserUpdateRequest {
-    +user_updation: UserUpdationInfo
-    +user_id: string
-  }
-
-  class DeleteTournamentRequest {
-    +tournament_id: string
-  }
-
-  class DeleteTrainingRequest {
-    +training_id: string
-  }
-
-  enum CommandType {
-    UpdateUser
-    DeleteTournament
-    DeleteTraining
-  }
+    enum URol {
+        USER
+        ADMIN
+        TRAINER
+    }
 }
 
-package "Utilities" {
-  class LinkData {
-    +linkText: string
-    +to: string
-    +icon: ReactNode
-  }
-
-  class ExistanceValues {
-    +email: string
-    +phone: string
-  }
+package BackendAuth {
+    class AuthManager {
+        - TOKEN_KEY: string {static}
+        - ROLE_KEY: string {static}
+        - USER_ID_KEY: string {static}
+        + getToken(): string | null {static}
+        + getUserRol(): URol | null {static}
+        + getUserId(): string | null {static}
+        + isAuthenticated(): boolean {static}
+        + getLogInInfo(): OnLogInInfo | null {static}
+        + login(token: string, userRol: URol, userId: string): void {static}
+        + logout(): void {static}
+    }
 }
 
-' Define relationships for Backend Entities
-UserInfo "1" -- "1" UserRol : has >
-UserSelectionInfo "1" -- "1" UserRol : has >
-RequestCommand "1" -- "1" RequestContent : contains >
-UserUpdateRequest "1" -- "1" UserUpdationInfo : contains >
-UserTournamentRegistration "1" -- "1" Tournament : registers for >
-UserTournamentRegistration "1" -- "1" UserInfo : registers >
-TrainingRegistration "1" -- "1" Training : registers for >
-TrainingRegistration "1" -- "1" UserInfo : registers >
-Tuition "1" -- "1" UserInfo : belongs to >
-TuitionInfo "1" -- "1" UserInfo : belongs to >
-UserUpdateRequest --|> RequestContent : implements
-DeleteTournamentRequest --|> RequestContent : implements
-DeleteTrainingRequest --|> RequestContent : implements
+package BackendUser {
+    interface User {
+        id_user: Uuid
+        first_name: string
+        last_name: string
+        birth_date: string
+        registration_date: string
+        email: string
+        email_verified: boolean
+        phone_number: string
+        country_code: string
+        password: string
+        identification_number: string
+        identification_type: IdType
+        user_rol: URol
+    }
 
-' Define relationships for Components
-InputComponent "1" -- "0..*" Validator : uses >
-UserForm "1" -- "1" UserCreationInfo : uses >
-RequestComponent "1" -- "1" RequestCommand : uses >
-RequestContentVisualizer "1" -- "1" RequestContent : visualizes >
-UserInfoComponent "1" -- "1" UserInfo : displays >
-UserRoleManagement "1" -- "1" UserInfo : manages >
-UserSelectionComponent "1" -- "0..*" UserSelectionInfo : selects >
-NavBarDashboard "1" -- "0..*" LinkData : contains >
-UserForm "1" -- "0..1" ExistanceValues : exempts >
+    interface UserInfo {
+        id_user: Uuid
+        first_name: string
+        last_name: string
+        birth_date: string
+        registration_date: string
+        email: string
+        email_verified: boolean
+        phone_number: string
+        country_code: string
+        identification_number: string
+        identification_type: IdType
+        user_rol: URol
+    }
 
-' Additional inferred relationships from code usage
-PaymentComponent "1" -- "1" TuitionInfo : creates >
-RequestComponent "1" -- "0..1" UserInfo : requester >
-RequestComponent "1" -- "0..1" UserInfo : approver >
-UserRoleManagement "1" -- "1" UserRol : updates >
+    interface UserCreation {
+        first_name: string
+        last_name: string
+        birth_date: string
+        email: string
+        phone_number: string
+        country_code: string
+        password: string
+        identification_number: string
+        identification_type: IdType
+    }
+
+    interface UserLogInInfo {
+        identifier: string
+        password: string
+    }
+
+    interface OnLogInInfo {
+        user_id: Uuid
+        user_rol: URol
+        token: string
+    }
+
+    interface UpdateUserRolePayload {
+        user_rol: URol
+    }
+
+    interface VerifyEmailPayload {
+        code: string
+    }
+
+    User ..> IdType
+    User ..> URol
+    UserInfo ..> IdType
+    UserInfo ..> URol
+    UserCreation ..> IdType
+    OnLogInInfo ..> URol
+    UpdateUserRolePayload ..> URol
+}
+
+package BackendCategory {
+    interface Category {
+        id_category: Uuid
+        name: string
+        min_age: number
+        max_age: number
+    }
+
+    interface CategoryCreation {
+        name: string
+        min_age: number
+        max_age: number
+    }
+
+    interface Level {
+        level_name: LevelName
+    }
+
+    interface CategoryRequirement {
+        id_category_requirement: Uuid
+        id_category: Uuid
+        requirement_description: string
+        required_level: LevelName
+    }
+
+    interface UserCategory {
+        id_user: Uuid
+        id_category: Uuid
+        user_level: LevelName
+    }
+
+    interface DeleteRequirementParams {
+      categoryId: Uuid
+      requirementId: Uuid
+    }
+
+    Level ..> LevelName
+    CategoryRequirement ..> LevelName
+    CategoryRequirement --> Category : "target_category (id_category)"
+    CategoryRequirement --> Category : "prerequisite_category (id_category_requirement)"
+    UserCategory ..> LevelName
+    UserCategory --> UserInfo : "user (id_user)"
+    UserCategory --> Category : "category (id_category)"
+}
+
+package BackendCourt {
+    interface Court {
+        id_court: Uuid
+        court_name: string
+    }
+
+    interface CourtCreation {
+        court_name: string
+    }
+
+    interface CourtReservation {
+        id_court_reservation: Uuid
+        id_court: Uuid
+        start_reservation_datetime: string
+        end_reservation_datetime: string
+        id_training: Uuid | null
+        id_tournament: Uuid | null
+    }
+
+    interface GetCourtReservationsParams {
+        start_datetime_filter?: string
+        end_datetime_filter?: string
+    }
+
+    CourtReservation --> Court : "court (id_court)"
+    CourtReservation --> Training : "training (id_training) (opt)"
+    CourtReservation --> Tournament : "tournament (id_tournament) (opt)"
+}
+
+package BackendTournament {
+    interface Tournament {
+        id_tournament: Uuid
+        name: string
+        id_category: Uuid
+        start_datetime: string
+        end_datetime: string
+    }
+
+    interface TournamentCreationPayload {
+        name: string
+        id_category: Uuid
+        start_datetime: string
+        end_datetime: string
+        id_court?: Uuid
+    }
+
+    interface TournamentUpdatePayload {
+        name: string
+        id_category: Uuid
+        start_datetime: string
+        end_datetime: string
+        id_court?: Uuid
+    }
+
+    interface TournamentRegistration {
+        id_tournament: Uuid
+        id_user: Uuid
+        registration_datetime: string
+    }
+
+    interface TournamentRegistrationPayload {
+        id_user: Uuid
+    }
+
+    interface TournamentAttendance {
+        id_tournament: Uuid
+        id_user: Uuid
+        attendance_datetime: string
+        position: number
+    }
+
+    interface TournamentAttendancePayload {
+        id_user: Uuid
+        position: number
+    }
+
+    interface UpdatePositionPayload {
+        position: number
+    }
+
+    Tournament --> Category : "category (id_category)"
+    TournamentCreationPayload --> Category : "category (id_category)"
+    TournamentCreationPayload --> Court : "court (id_court) (opt)"
+    TournamentUpdatePayload --> Category : "category (id_category)"
+    TournamentUpdatePayload --> Court : "court (id_court) (opt)"
+    TournamentRegistration --> Tournament : "tournament (id_tournament)"
+    TournamentRegistration --> UserInfo : "user (id_user)"
+    TournamentRegistrationPayload --> UserInfo : "user (id_user)"
+    TournamentAttendance --> Tournament : "tournament (id_tournament)"
+    TournamentAttendance --> UserInfo : "user (id_user)"
+    TournamentAttendancePayload --> UserInfo : "user (id_user)"
+}
+
+package BackendTraining {
+    interface Training {
+        id_training: Uuid
+        name: string
+        id_category: Uuid
+        trainer_id: Uuid
+        start_datetime: string
+        end_datetime: string
+        minimum_payment: number | null
+    }
+
+    interface TrainingCreationPayload {
+        name: string
+        id_category: Uuid
+        trainer_id: Uuid
+        start_datetime: string
+        end_datetime: string
+        minimum_payment?: number | null
+        id_court?: Uuid
+    }
+
+    interface TrainingUpdatePayload {
+        name: string
+        id_category: Uuid
+        trainer_id: Uuid
+        start_datetime: string
+        end_datetime: string
+        minimum_payment?: number | null
+        id_court?: Uuid
+    }
+
+    interface TrainingRegistration {
+        id_training: Uuid
+        id_user: Uuid
+        registration_datetime: string
+        attended: boolean
+        attendance_datetime: string | null
+    }
+
+    interface TrainingRegistrationPayload {
+        id_user: Uuid
+    }
+
+    interface MarkAttendancePayload {
+        attended: boolean
+    }
+
+    Training --> Category : "category (id_category)"
+    Training --> UserInfo : "trainer (trainer_id)"
+    TrainingCreationPayload --> Category : "category (id_category)"
+    TrainingCreationPayload --> UserInfo : "trainer (trainer_id)"
+    TrainingCreationPayload --> Court : "court (id_court) (opt)"
+    TrainingUpdatePayload --> Category : "category (id_category)"
+    TrainingUpdatePayload --> UserInfo : "trainer (trainer_id)"
+    TrainingUpdatePayload --> Court : "court (id_court) (opt)"
+    TrainingRegistration --> Training : "training (id_training)"
+    TrainingRegistration --> UserInfo : "user (id_user)"
+    TrainingRegistrationPayload --> UserInfo : "user (id_user)"
+}
+
+package BackendTuition {
+    interface Tuition {
+        id_tuition: Uuid
+        id_user: Uuid
+        amount: number
+        payment_date: string
+    }
+    Tuition --> UserInfo : "user (id_user)"
+}
+
+package BackendRequest {
+    interface Request {
+        request_id: Uuid
+        requester_id: Uuid
+        requested_command: string
+        justification: string
+        approved: boolean | null
+        approver_id: Uuid | null
+    }
+
+    interface RequestCreation {
+        requester_id: Uuid
+        requested_command: string
+        justification: string
+    }
+
+    Request --> UserInfo : "requester (requester_id)"
+    Request --> UserInfo : "approver (approver_id) (opt)"
+    RequestCreation --> UserInfo : "requester (requester_id)"
+}
+
+package BackendReport {
+    interface ReportUserCategory {
+        category_name: string
+        user_level: string
+    }
+
+    interface TrainingSummary {
+        total_registrations: number
+        total_attendances: number
+        most_recent_attendance: string | null
+    }
+
+    interface TournamentSummary {
+        total_registrations: number
+        total_attendances: number
+        most_recent_attendance: string | null
+        most_recent_registration: string | null
+    }
+
+    interface TuitionSummary {
+        last_payment_amount: number
+        last_payment_date: string
+        days_until_next_payment: number
+        total_payments: number
+    }
+
+    interface ReportUserRequest {
+        request_id: Uuid
+        requested_command: string
+        state: string
+    }
+
+    interface Report {
+        full_name: string
+        email: string
+        phone_number: string
+        birth_date: string
+        registration_date: string
+        categories: ReportUserCategory[]
+        training_summary: TrainingSummary
+        tournament_summary: TournamentSummary
+        tuition_summary: TuitionSummary
+        requests: ReportUserRequest[]
+    }
+
+    Report *-- "categories 0..*" ReportUserCategory
+    Report *-- "training_summary 1" TrainingSummary
+    Report *-- "tournament_summary 1" TournamentSummary
+    Report *-- "tuition_summary 1" TuitionSummary
+    Report *-- "requests 0..*" ReportUserRequest
+    ReportUserRequest --> Request : "refers to (request_id)"
+}
+
+AuthManager ..> OnLogInInfo
+AuthManager ..> URol
 
 @enduml

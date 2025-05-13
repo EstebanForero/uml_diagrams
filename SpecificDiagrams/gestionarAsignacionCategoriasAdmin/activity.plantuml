@@ -1,0 +1,26 @@
+@startuml
+title UC_GestionarAsignacionCategoriasAdmin: Activity Diagram
+
+start
+:Admin navega a "Gestión de Categorías de Usuario (Admin)";
+:Sistema carga lista de todos los usuarios (para búsqueda);
+:Admin ingresa un email (o parte de él) para buscar un usuario;
+:Sistema filtra y muestra los usuarios coincidentes;
+:Para un usuario encontrado, sistema muestra las categorías a las que está asignado, con opción de eliminar;
+:Admin selecciona una categoría y hace clic en "Eliminar Asignación";
+:Sistema muestra Diálogo de Confirmación;
+if (Admin confirma eliminación?) then (sí)
+  :Sistema envía solicitud al Backend API para eliminar la asignación del usuario a la categoría;
+  if (Eliminación Exitosa en Backend?) then (sí)
+    :Backend API elimina la relación usuario-categoría;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar UI para remover la categoría de la lista del usuario;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+else (no)
+  :Cancelar eliminación;
+endif
+stop
+@enduml

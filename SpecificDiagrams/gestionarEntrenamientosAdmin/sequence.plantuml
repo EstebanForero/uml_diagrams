@@ -1,0 +1,97 @@
+@startuml
+title UC_GestionarEntrenamientosCRUDAdmin (Crear/Editar Entrenamiento): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminTrainingPage" as TrainingMgmtPage <<(R,orchid)>>
+participant "TrainingComponentCard (existing)" as TrainingCard <<(C,lightgrey)>>
+participant "TrainingCreationDialog or TrainingEditDialog" as TrainingFormDialog <<(C,lightgrey)>>
+participant "TrainingForm" as TrainingFormUI <<(C,lightgrey)>>
+participant "training_backend.ts\ncreateTraining() or updateTraining()" as TrainingBackend <<(F,yellow)>>
+participant "utils.ts\nconvertLocalToUtcString()" as DateUtil <<(F,lightgreen)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+alt Create New Training
+  AdminUser -> TrainingMgmtPage : Clicks "Create New Training"
+  TrainingMgmtPage -> TrainingFormDialog : Opens TrainingCreationDialog
+  activate TrainingFormDialog
+  TrainingFormDialog -> TrainingFormUI : Renders empty training form
+  activate TrainingFormUI
+  AdminUser -> TrainingFormUI : Enters new training details (name, category, trainer, court, dates (local), payment)
+  AdminUser -> TrainingFormUI : Clicks "Create Training"
+  TrainingFormUI -> TrainingFormDialog : onSubmit(formData: TrainingFormData)
+  deactivate TrainingFormUI
+
+  TrainingFormDialog -> TrainingBackend : createTraining(payloadFromFormData)
+  activate TrainingBackend
+  TrainingBackend -> DateUtil : convertLocalToUtcString(formData.start_datetime)
+  TrainingBackend -> DateUtil : convertLocalToUtcString(formData.end_datetime)
+  ' ... UTC conversion ... '
+  TrainingBackend -> FetchUtil : fetchJson("/trainings", {POST, body: utcPayload})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /trainings (utcPayload)
+  activate API
+  API --> FetchUtil : HTTP 200 OK (Training object with UTC dates)
+  deactivate API
+  FetchUtil --> TrainingBackend : Training (UTC)
+  TrainingBackend -> DateUtil : displayUtcAsLocal(...) ' for start & end '
+  TrainingBackend --> TrainingFormDialog : Training (local dates)
+  deactivate TrainingBackend
+
+  TrainingFormDialog -> Toaster : toast.success("Training created...")
+  activate Toaster
+  deactivate Toaster
+else Edit Existing Training
+  AdminUser -> TrainingCard : Clicks "Edit" on an existing training
+  TrainingCard -> TrainingMgmtPage : handleEdit(training)
+  TrainingMgmtPage -> TrainingFormDialog : Opens TrainingEditDialog (with trainingId)
+  activate TrainingFormDialog
+  TrainingFormDialog -> QueryClient : useQuery(['training', trainingId]) ' to get trainingData '
+  ' ... Loads training data ... '
+  TrainingFormDialog -> TrainingFormUI : Renders training form, pre-filled
+  activate TrainingFormUI
+  AdminUser -> TrainingFormUI : Modifies training details
+  AdminUser -> TrainingFormUI : Clicks "Save Changes"
+  TrainingFormUI -> TrainingFormDialog : onSubmit(formData: TrainingFormData)
+  deactivate TrainingFormUI
+
+  TrainingFormDialog -> TrainingBackend : updateTraining(trainingId, payloadFromFormData)
+  activate TrainingBackend
+  TrainingBackend -> DateUtil : convertLocalToUtcString(formData.start_datetime)
+  TrainingBackend -> DateUtil : convertLocalToUtcString(formData.end_datetime)
+  ' ... UTC conversion ... '
+  TrainingBackend -> FetchUtil : fetchJson("/trainings/{trainingId}", {PUT, body: utcPayload})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : PUT /trainings/{trainingId} (utcPayload)
+  activate API
+  API --> FetchUtil : HTTP 200 OK (updated Training object with UTC dates)
+  deactivate API
+  FetchUtil --> TrainingBackend : Training (UTC)
+  TrainingBackend -> DateUtil : displayUtcAsLocal(...) ' for start & end '
+  TrainingBackend --> TrainingFormDialog : Training (local dates, updated)
+  deactivate TrainingBackend
+
+  TrainingFormDialog -> Toaster : toast.success("Training updated...")
+  activate Toaster
+  deactivate Toaster
+end
+
+TrainingFormDialog -> QueryClient : invalidateQueries({queryKey: ['trainings']})
+activate QueryClient
+QueryClient -> TrainingMgmtPage : Triggers refetch of trainings list
+deactivate QueryClient
+TrainingFormDialog -> TrainingMgmtPage : Closes dialog
+deactivate TrainingFormDialog
+deactivate TrainingMgmtPage
+@enduml

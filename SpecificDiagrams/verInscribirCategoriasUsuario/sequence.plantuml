@@ -1,0 +1,103 @@
+@startuml
+title UC_VerInscribirseCategoriasUsuario (Inscribirse): Sequence Diagram
+
+actor "Usuario" as User
+participant "UserCategoryPageComponent" as CategoryPage <<(R,orchid)>>
+participant "AvailableCategoryCard" as AvailCatCard <<(C,lightgrey)>>
+participant "category_backend.ts\nregisterUserInCategory()" as CategoryBackend <<(F,yellow)>>
+participant "category_backend.ts\ncheckUserEligibility()" as EligibilityCheck <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+User -> CategoryPage : Navigates to /dashboard_user/categories
+activate CategoryPage
+CategoryPage -> QueryClient : useQuery(['allCategories'])
+CategoryPage -> QueryClient : useQuery(['userCategories', userId])
+CategoryPage -> QueryClient : useQueries (for requirements of all categories)
+' ... Initial data loading (all categories, user's current categories, requirements) ... '
+
+CategoryPage -> CategoryPage : Determines 'potentiallyAvailableList'
+loop for each category in potentiallyAvailableList
+  CategoryPage -> QueryClient : useQuery(['categoryEligibility', catId, userId])
+  activate QueryClient
+  QueryClient -> EligibilityCheck : checkUserEligibility(catId, userId)
+  activate EligibilityCheck
+  EligibilityCheck -> FetchUtil : fetchJson("/categories/{catId}/users/{userId}/eligible")
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "user_token_abc"
+  deactivate AuthMgr
+  FetchUtil -> API : GET /categories/{catId}/users/{userId}/eligible
+  activate API
+  alt Eligible
+    API --> FetchUtil : HTTP 200 OK (true)
+    FetchUtil --> EligibilityCheck : true
+  else Not Eligible (or error treated as not eligible)
+    API --> FetchUtil : HTTP Error (e.g., 400, 403, 404 meaning requirements not met)
+    FetchUtil -> EligibilityCheck : throws Error(message from backend)
+  end
+  deactivate API
+  deactivate FetchUtil
+  EligibilityCheck --> QueryClient : true or throws Error
+  deactivate EligibilityCheck
+  QueryClient --> CategoryPage : EligibilityStatus for catId
+  deactivate QueryClient
+end
+
+CategoryPage -> AvailCatCard : Renders available category card with eligibility status
+activate AvailCatCard
+
+alt User sees an eligible category and clicks "Register"
+  User -> AvailCatCard : Clicks "Register"
+  AvailCatCard -> CategoryPage : onRegister(categoryId)
+  deactivate AvailCatCard
+
+  CategoryPage -> AuthMgr : getUserId() ' (already has it from loader, but for pattern consistency) '
+  activate AuthMgr
+  AuthMgr --> CategoryPage : userId
+  deactivate AuthMgr
+
+  CategoryPage -> CategoryBackend : registerUserInCategory(categoryId, userId)
+  activate CategoryBackend
+  CategoryBackend -> FetchUtil : fetchJson("/categories/{catId}/users/{userId}", {POST})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "user_token_abc"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /categories/{catId}/users/{userId}
+  activate API
+  alt Registration successful
+    API --> FetchUtil : HTTP 200 OK (message string)
+    FetchUtil --> CategoryBackend : "Successfully registered..."
+    CategoryBackend --> CategoryPage : "Successfully registered..."
+
+    CategoryPage -> Toaster : toast.success("Successfully registered for category!")
+    activate Toaster
+    deactivate Toaster
+
+    CategoryPage -> QueryClient : invalidateQueries(['userCategories', userId])
+    CategoryPage -> QueryClient : invalidateQueries(['categoryEligibility', categoryId, userId]) ' Re-check eligibility, though it should now be registered '
+    activate QueryClient
+    deactivate QueryClient
+  else Registration failed
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> CategoryBackend : throws Error
+    CategoryBackend --> CategoryPage : throws Error
+    CategoryPage -> Toaster : toast.error("Registration failed...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate CategoryBackend
+else User sees a non-eligible category or card in loading state
+  deactivate AvailCatCard
+  ' Button is disabled or shows ineligibility reason '
+end
+deactivate CategoryPage
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+title UC_GestionarRolesUsuariosAdmin: Activity Diagram
+
+start
+:Admin navega a Gestión de Roles de Usuario;
+:Sistema carga y muestra lista de todos los usuarios, cada uno con su rol actual y un selector de rol;
+:Admin selecciona un Usuario específico;
+:Admin selecciona un Nuevo Rol para ese usuario desde el dropdown;
+if (Nuevo Rol es diferente al Rol Actual?) then (sí)
+  :Sistema envía solicitud de actualización de rol al Backend API\n(ID Usuario, Nuevo Rol);
+  if (Actualización Exitosa en Backend?) then (sí)
+    :Backend API actualiza el rol del usuario;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar UI para reflejar el nuevo rol del usuario en la lista/tarjeta;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+    :Revertir selección del dropdown al rol original (opcional);
+  endif
+else (no)
+  :No se realiza ninguna acción;
+endif
+stop
+@enduml

@@ -1,0 +1,68 @@
+@startuml
+title UC_ConsultarReportesUsuariosEntrenador: Sequence Diagram
+
+actor "Entrenador" as Trainer
+participant "ReportSearchPage" as ReportSearch <<(R,orchid)>>
+participant "Input (Email Search)" as EmailInput <<(C,lightgrey)>>
+participant "UsersTable (Search Results)" as ResultsTable <<(C,lightgrey)>>
+participant "report_backend.ts\ngetUserReport()" as ReportBackend <<(F,yellow)>>
+participant "user_backend.ts\ngetAllUsers()" as UserListBackend <<(F,yellow)>>
+participant "ReportPageComponent (Dynamic Route)" as ReportPage <<(R,orchid)>>
+participant "UserReportDisplay" as ReportDisplay <<(C,lightgrey)>>
+participant "TanStackRouter" as Router <<(S,lightgreen)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+
+Trainer -> ReportSearch : Navigates to /dashboard_trainer/reports/
+activate ReportSearch
+ReportSearch -> QueryClient : useQuery(['allUsersForReportSearch'])
+activate QueryClient
+QueryClient -> UserListBackend : getAllUsers()
+' ... fetchJson to get all users ... '
+UserListBackend --> QueryClient : UserInfo[]
+deactivate QueryClient
+QueryClient --> ReportSearch : UserInfo[]
+
+Trainer -> EmailInput : Enters user email to search
+EmailInput -> ReportSearch : onChange(searchValue)
+ReportSearch -> ReportSearch : Filters users based on searchEmail (locally)
+ReportSearch -> ResultsTable : Renders filtered users
+
+Trainer -> ResultsTable : Clicks "View Report" for a user
+ResultsTable -> Router : Link to="/dashboard_trainer/reports/{userId}"
+activate Router
+Router -> ReportPage : Navigates and loads component, triggers loader for $userId route
+deactivate Router
+activate ReportPage
+
+ReportPage -> ReportBackend : getUserReport(userId)
+activate ReportBackend
+ReportBackend -> FetchUtil : fetchJson("/reports/user/{userId}")
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "trainer_token_123"
+deactivate AuthMgr
+FetchUtil -> API : GET /reports/user/{userId}
+activate API
+alt Report found
+  API --> FetchUtil : HTTP 200 OK (Report data)
+  FetchUtil --> ReportBackend : Report
+  ReportBackend --> ReportPage : Report data
+  ReportPage -> ReportDisplay : Renders UserReportDisplay with report data
+  activate ReportDisplay
+  deactivate ReportDisplay
+else Report not found or error
+  API --> FetchUtil : HTTP Error (e.g., 404)
+  FetchUtil -> ReportBackend : throws Error
+  ReportBackend --> ReportPage  : throws Error
+  ReportPage -> ReportPage : Renders ReportErrorComponent
+end
+deactivate API
+deactivate FetchUtil
+deactivate ReportBackend
+deactivate ReportPage
+deactivate ReportSearch
+@enduml

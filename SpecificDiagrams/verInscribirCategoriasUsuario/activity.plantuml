@@ -1,0 +1,31 @@
+@startuml
+title UC_VerInscribirseCategoriasUsuario (Inscribirse): Activity Diagram
+
+start
+:Usuario navega a la página de Categorías del Usuario;
+:Sistema carga:
+  - Todas las categorías disponibles
+  - Las categorías a las que el usuario ya está inscrito
+  - Los requisitos de cada categoría;
+:Para cada categoría NO inscrita:
+  :Sistema verifica la elegibilidad del usuario (llamada al Backend API);
+:Sistema muestra:
+  - Lista de "Categorías Disponibles" (con estado de elegibilidad y botón "Registrarse" si elegible)
+  - Lista de "Mis Categorías Asignadas";
+
+if (Usuario encuentra una Categoría Disponible y Elegible) then (sí)
+  :Usuario hace clic en "Registrarse" para esa categoría;
+  :Sistema envía solicitud de registro a la categoría al Backend API\n(ID Categoría, ID Usuario);
+  if (Registro Exitoso en Backend?) then (sí)
+    :Backend API inscribe al usuario en la categoría (nivel inicial BEGGINER);
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar listas de Categorías Disponibles y Asignadas;
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+else (no)
+  :Usuario revisa otras categorías o sus categorías asignadas;
+endif
+stop
+@enduml

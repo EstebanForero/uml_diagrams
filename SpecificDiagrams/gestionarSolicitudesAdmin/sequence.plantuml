@@ -1,0 +1,70 @@
+@startuml
+title UC_GestionarSolicitudesAdmin (Aprobar Solicitud): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "AdminRequestsPage" as RequestsPage <<(R,orchid)>>
+participant "RequestVisualizer" as RequestCard <<(C,lightgrey)>>
+participant "AdminFunctionality (in RequestVisualizer)" as RequestAdminActions <<(C,lightgrey)>>
+participant "request_backend.ts\ncompleteRequest()" as RequestBackend <<(F,yellow)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+
+AdminUser -> RequestsPage : Navigates to /dashboard_admin/requests
+activate RequestsPage
+RequestsPage -> QueryClient : useQuery(['requests'])
+activate QueryClient
+QueryClient -> RequestBackend : listRequests()
+activate RequestBackend
+' ... fetchJson -> API to get all requests ... '
+RequestBackend --> QueryClient : Request[]
+deactivate RequestBackend
+QueryClient --> RequestsPage : Request[]
+deactivate QueryClient
+
+RequestsPage -> RequestCard : Renders request card for each request
+activate RequestCard
+RequestCard -> RequestAdminActions : Renders "Approve" / "Reject" buttons
+activate RequestAdminActions
+
+AdminUser -> RequestAdminActions : Clicks "Approve" for a request
+RequestAdminActions -> RequestBackend : completeRequest(requestId, true)
+activate RequestBackend
+RequestBackend -> FetchUtil : fetchJson("/requests/{id}/complete/true", {POST})
+activate FetchUtil
+FetchUtil -> AuthMgr : getToken()
+activate AuthMgr
+AuthMgr --> FetchUtil : "admin_token_xyz"
+deactivate AuthMgr
+FetchUtil -> API : POST /requests/{id}/complete/true
+activate API
+alt Request completed successfully
+  API --> FetchUtil : HTTP 200 OK (message or void)
+  FetchUtil --> RequestBackend : (void or success message)
+  RequestBackend --> RequestAdminActions : (void or success message)
+
+  RequestAdminActions -> QueryClient : invalidateQueries({queryKey: ['requests']})
+  activate QueryClient
+  QueryClient -> RequestsPage : Triggers refetch of requests list
+  deactivate QueryClient
+  RequestAdminActions -> Toaster : toast.success("Request approved")
+  activate Toaster
+  deactivate Toaster
+else Error completing request
+  API --> FetchUtil : HTTP Error
+  FetchUtil -> RequestBackend : throws Error
+  RequestBackend --> RequestAdminActions : throws Error
+  RequestAdminActions -> Toaster : toast.error(error.message)
+  activate Toaster
+  deactivate Toaster
+end
+deactivate API
+deactivate FetchUtil
+deactivate RequestBackend
+deactivate RequestAdminActions
+deactivate RequestCard
+deactivate RequestsPage
+@enduml

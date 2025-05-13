@@ -1,0 +1,19 @@
+@startuml
+title UC_GestionarSolicitudesAdmin (Aprobar Solicitud): Activity Diagram
+
+start
+:Admin navega a la página de Gestión de Solicitudes;
+:Sistema carga y muestra todas las solicitudes pendientes y completadas;
+:Admin identifica una solicitud pendiente;
+:Admin hace clic en "Aprobar" para esa solicitud;
+:Sistema envía comando de aprobación al Backend API\n(ID Solicitud, estado=aprobado, ID Admin);
+if (Completado Exitoso en Backend?) then (sí)
+  :Backend API procesa la solicitud (ejecuta comando asociado, actualiza estado);
+  :Mostrar mensaje de éxito (Toast);
+  :Actualizar estado de la solicitud en la UI (mostrar como Aprobada);
+else (no - error en backend)
+  :Backend API retorna error;
+  :Mostrar mensaje de error (Toast);
+endif
+stop
+@enduml

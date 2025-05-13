@@ -1,0 +1,22 @@
+@startuml
+title UC_GestionarAsistenciaEntrenamientosEntrenador: Activity Diagram
+
+start
+:Entrenador navega a la página de Entrenamientos (Entrenador);
+:Sistema carga y muestra lista de Entrenamientos;
+:Entrenador selecciona un Entrenamiento y hace clic en "Gestionar Inscripciones/Asistencia";
+:Sistema muestra diálogo con lista de usuarios inscritos en el Entrenamiento y su estado de asistencia actual (switch);
+:Entrenador conmuta el switch de Asistencia para un Usuario específico;
+:Nuevo estado de asistencia = !Estado Actual;
+:Sistema envía solicitud de marcación de asistencia al Backend API\n(ID Entrenamiento, ID Usuario, Nuevo Estado Asistencia);
+if (Marcación de Asistencia Exitosa en Backend?) then (sí)
+  :Backend API actualiza el estado de asistencia del usuario para ese entrenamiento (y fecha si asistió);
+  :Mostrar mensaje de éxito (Toast);
+  :Actualizar UI del switch y detalles de asistencia en el diálogo;
+else (no - error en backend)
+  :Backend API retorna error;
+  :Mostrar mensaje de error (Toast);
+  :Revertir estado del switch a su valor original (opcional);
+endif
+stop
+@enduml

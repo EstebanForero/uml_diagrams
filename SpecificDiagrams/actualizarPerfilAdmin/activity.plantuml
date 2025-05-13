@@ -1,0 +1,24 @@
+@startuml
+title UC_ActualizarPerfilAdmin (Actualizar Perfil Propio): Activity Diagram
+
+start
+:Admin navega a su página de Perfil (Dashboard Admin Index);
+:Sistema carga y muestra datos del perfil actual del Admin en un formulario;
+:Admin modifica los campos deseados en el formulario;
+:Admin envía el formulario ("Update Profile");
+:Validar datos de entrada (frontend - Zod);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario;
+else (no)
+  :Sistema envía datos actualizados del perfil al Backend API\n(ID del Admin, nuevos datos);
+  if (Actualización Exitosa en Backend?) then (sí)
+    :Backend API actualiza los datos del perfil del Admin;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar datos del perfil en la UI (si es necesario, por ej. nombre);
+  else (no - error en backend)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

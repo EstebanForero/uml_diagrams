@@ -1,0 +1,31 @@
+@startuml
+title UC_GestionarCategoriasCRUDAdmin (Añadir Requisito): Activity Diagram
+
+start
+:Admin navega a Gestión de Categorías;
+:Sistema muestra lista de categorías existentes;
+:Admin selecciona una Categoría Objetivo y hace clic en "Requisitos";
+:Sistema muestra Diálogo de Requisitos para la Categoría Objetivo;
+  :Sistema carga y muestra requisitos actuales y lista de todas las categorías (para selector);
+:Admin, en el formulario "Añadir Nuevo Requisito":
+  :Selecciona una "Categoría Prerrequisito" del dropdown;
+  :Selecciona un "Nivel Requerido" del dropdown;
+:Admin hace clic en "Añadir Requisito";
+:Validar datos de entrada (frontend - Zod: IDs seleccionados);
+if (Datos inválidos?) then (sí)
+  :Mostrar mensaje de error en formulario de requisitos;
+else (no)
+  :Construir payload del requisito (ID Cat. Objetivo, ID Cat. Prerrequisito, Nivel Requerido, Descripción);
+  :Sistema envía datos del nuevo requisito al Backend API;
+  if (Adición Exitosa en Backend?) then (sí)
+    :Backend API crea el registro de requisito;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar lista de requisitos actuales en el diálogo;
+    :Limpiar formulario de "Añadir Nuevo Requisito";
+  else (no - error en backend, e.g., requisito ya existe)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

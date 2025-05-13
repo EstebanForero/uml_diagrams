@@ -1,70 +1,704 @@
 @startuml
-' Define interfaces
-interface "PasswordHasher" as PH
-interface "UserRepository" as UR
-interface "CategoryRepository" as CR
-interface "CategoryRequirementRepository" as CRR
-interface "UserCategoryRepository" as UCR
-interface "TournamentRepository" as TR
-interface "TournamentRegistrationRepository" as TRR
-interface "TournamentAttendanceRepository" as TAR
-interface "TrainingRepository" as TRN
-interface "TrainingRegistrationRepository" as TRNR
-interface "TuitionRepository" as TUIR
-interface "RequestRepository" as REQR
+title Frontend Components UML Diagram
+left to right direction
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment center
+hide emptymembers
+hide circle
 
-' Define components
-component "BcryptHasher" as BH
-BH ..|> PH : implements
+package "Backend Abstractions" {
+  interface AuthManager
+  interface UserInfo
+  interface Category
+  interface UserCategory
+  interface CategoryRequirement
+  interface Tournament
+  interface TournamentRegistration
+  interface TournamentAttendance
+  interface Training
+  interface TrainingRegistration
+  interface Court
+  interface CourtReservation
+  interface Request
+  interface Report
+  interface Tuition
+  enum URol
+  enum LevelName
+}
 
-component "TursoDb" as DB
-DB ..|> UR : implements
-DB ..|> CR : implements
-DB ..|> CRR : implements
-DB ..|> UCR : implements
-DB ..|> TR : implements
-DB ..|> TRR : implements
-DB ..|> TAR : implements
-DB ..|> TRN : implements
-DB ..|> TRNR : implements
-DB ..|> TUIR : implements
-DB ..|> REQR : implements
+package "Core UI (shadcn/ui & Custom)" {
+  class Button
+  class Card
+  class CardHeader
+  class CardContent
+  class CardFooter
+  class CardTitle
+  class CardDescription
+  class Dialog
+  class DialogContent
+  class DialogHeader
+  class DialogTitle
+  class DialogFooter
+  class DialogTrigger
+  class DialogClose
+  class AlertDialog
+  class AlertDialogContent
+  class Input
+  class Label
+  class Form
+  class FormItem
+  class FormControl
+  class FormLabel
+  class FormMessage
+  class Select
+  class SelectContent
+  class SelectItem
+  class SelectTrigger
+  class SelectValue
+  class Skeleton
+  class ScrollArea
+  class Separator
+  class Badge
+  class Tabs
+  class TabsContent
+  class TabsList
+  class TabsTrigger
+  class Toaster
+  class Textarea
+  class Switch
+  class Table
+  class TableBody
+  class TableCell
+  class TableHead
+  class TableHeader
+  class TableRow
+  class TableCaption
+  class Sidebar
+  class SidebarContent
+  class SidebarFooter
+  class SidebarGroup
+  class SidebarGroupContent
+  class SidebarMenu
+  class SidebarMenuButton
+  class SidebarMenuItem
+  class SidebarProvider
+  class Alert
+  class AlertDescription
+  class AlertTitle
 
-' Define services
-component "UserService" as US
-US ..> UR : uses
-US ..> PH : uses
+  class ReusableForm {
+    + schema: ZodType
+    + defaultValues: any
+    + onSubmit: (values: any) => Promise<void>
+    + fields: FormFieldConfig[]
+    + submitButtonText?: string
+  }
+  ReusableForm o-- Form
+  ReusableForm *-- Input
+  ReusableForm *-- Select
+  ReusableForm *-- Textarea
+  ReusableForm *-- Button
+}
 
-component "CategoryService" as CS
-CS ..> CR : uses
-CS ..> CRR : uses
-CS ..> UCR : uses
-CS ..> US : uses
+package "Shared Components" {
+  class AppSidebar {
+    + links: SidebarLink[]
+  }
+  AppSidebar o-- Sidebar
+  AppSidebar *-- SidebarMenuItem
+  AppSidebar *-- Button
 
-component "TournamentService" as TS
-TS ..> TR : uses
-TS ..> TRR : uses
-TS ..> TAR : uses
-TS ..> CS : uses
+  class NavBarComponent {
+  }
+  NavBarComponent o-- "<Link> (TanStackRouter)"
 
-component "TrainingService" as TRS
-TRS ..> TRN : uses
-TRS ..> TRNR : uses
-TRS ..> CS : uses
+  class CategorySelector {
+    + value: Uuid
+    + onChange: (value: Uuid) => void
+    + excludeCategoryId?: Uuid
+  }
+  CategorySelector o-- Select
+  CategorySelector ..> Category : "fetches list"
 
-component "TuitionService" as TUS
-TUS ..> TUIR : uses
+  class CourtSelector {
+    + value?: Uuid
+    + onChange: (courtId: Uuid) => void
+  }
+  CourtSelector o-- Select
+  CourtSelector ..> Court : "fetches list"
 
-component "RequestService" as RS
-RS ..> REQR : uses
+  class TrainerSelector {
+    + value?: Uuid
+    + onChange: (trainerId: Uuid) => void
+  }
+  TrainerSelector o-- Select
+  TrainerSelector ..> UserInfo : "fetches list (TRAINER role)"
 
-' Define HttpApi
-component "HttpApi" as HA
-HA ..> US : uses
-HA ..> CS : uses
-HA ..> TS : uses
-HA ..> TRS : uses
-HA ..> TUS : uses
-HA ..> RS : uses
+  class EventCourtBadge {
+    + eventId: Uuid
+    + eventType: 'training' | 'tournament'
+  }
+  EventCourtBadge o-- Badge
+  EventCourtBadge ..> CourtReservation : "fetches by eventId"
+  EventCourtBadge ..> Court : "fetches details"
+
+  class PremadeRequest {
+    + requestCreation: RequestCreation
+    + onOpenChange: (open: boolean) => void
+  }
+  PremadeRequest o-- Dialog
+  PremadeRequest o-- RequestCreator
+
+  class ProfileComponent {
+    + userId: string
+    + userRol: URol
+  }
+  ProfileComponent o-- Card
+  ProfileComponent o-- ReusableForm
+  ProfileComponent o-- PremadeRequest
+  ProfileComponent ..> UserInfo : "fetches & updates"
+  ProfileComponent ..> RequestCreation : "creates"
+
+  class RequestCreator {
+    + defaultValues?: RequestCreation
+  }
+  RequestCreator o-- Card
+  RequestCreator o-- ReusableForm
+  RequestCreator ..> RequestCreation : "creates"
+  RequestCreator ..> AuthManager : "gets userId"
+
+  class RequestVisualizer {
+    + request: Request
+    + admin?: boolean
+  }
+  RequestVisualizer o-- Card
+  RequestVisualizer o-- Badge
+  RequestVisualizer *-- "AdminFunctionality"
+  RequestVisualizer ..> UserInfo : "fetches requester/approver info"
+
+  class PaymentOptions {
+    + onSelectPlan: (amount: number) => void
+    + isLoading: boolean
+  }
+  PaymentOptions *-- Card
+  PaymentOptions *-- Button
+
+  class TuitionDetails {
+    + tuition: Tuition
+  }
+}
+
+package "Route Components & Pages" {
+  class RootRouteComponent {
+  }
+  RootRouteComponent o-- NavBarComponent
+  RootRouteComponent o-- Toaster
+  RootRouteComponent o-- "<Outlet> (TanStackRouter)"
+  RootRouteComponent o-- "<QueryClientProvider>"
+
+  class LoginRouteComponent {
+  }
+  LoginRouteComponent o-- Form
+  LoginRouteComponent o-- Input
+  LoginRouteComponent o-- Button
+  LoginRouteComponent ..> AuthManager : "manages login state"
+  LoginRouteComponent ..> UserLogInInfo : "submits"
+
+  class SigninRouteComponent {
+  }
+  SigninRouteComponent o-- ReusableForm
+  SigninRouteComponent ..> UserCreation : "submits"
+
+  package "Dashboard User" {
+    class UserDashboardLayout {
+    }
+    UserDashboardLayout o-- AppSidebar
+    UserDashboardLayout o-- SidebarProvider
+
+    class UserIndexPage {
+    }
+    UserIndexPage o-- ProfileComponent
+
+    class UserCategoriesPage {
+    }
+    UserCategoriesPage *-- "AvailableCategoryCard"
+    UserCategoriesPage *-- "RegisteredCategoryCard"
+    UserCategoriesPage ..> Category : "fetches all"
+    UserCategoriesPage ..> UserCategory : "fetches user's"
+    UserCategoriesPage ..> CategoryRequirement : "fetches for each category"
+    UserCategoriesPage ..> AuthManager : "gets userId"
+
+    class UserRequestsPage {
+    }
+    UserRequestsPage o-- RequestCreator
+    UserRequestsPage *-- RequestVisualizer
+    UserRequestsPage ..> Request : "fetches user's"
+    UserRequestsPage ..> AuthManager : "gets userId"
+
+    class UserTournamentPage {
+    }
+    UserTournamentPage *-- "UserTournamentCard"
+    UserTournamentPage *-- "RegisteredTournamentCard"
+    UserTournamentPage *-- "AttendedTournamentCard"
+    UserTournamentPage ..> Tournament : "fetches eligible/all"
+    UserTournamentPage ..> TournamentRegistration : "fetches user's"
+    UserTournamentPage ..> TournamentAttendance : "fetches user's"
+    UserTournamentPage ..> AuthManager : "gets userId"
+
+    class UserTrainingPage {
+    }
+    UserTrainingPage *-- "AvailableTrainingCard"
+    UserTrainingPage *-- "RegisteredTrainingCard"
+    UserTrainingPage ..> Training : "fetches eligible/all"
+    UserTrainingPage ..> TrainingRegistration : "fetches user's"
+    UserTrainingPage ..> AuthManager : "gets userId"
+
+    class UserTuitionPage {
+    }
+    UserTuitionPage o-- Card
+    UserTuitionPage o-- PaymentOptions
+    UserTuitionPage o-- TuitionDetails
+    UserTuitionPage ..> Tuition : "fetches user's"
+    UserTuitionPage ..> AuthManager : "gets userId"
+  }
+  UserDashboardLayout --|> RootRouteComponent : "nested in"
+  UserIndexPage --|> UserDashboardLayout
+  UserCategoriesPage --|> UserDashboardLayout
+  UserRequestsPage --|> UserDashboardLayout
+  UserTournamentPage --|> UserDashboardLayout
+  UserTrainingPage --|> UserDashboardLayout
+  UserTuitionPage --|> UserDashboardLayout
+
+
+  package "Dashboard Trainer" {
+    class TrainerDashboardLayout {
+    }
+    TrainerDashboardLayout o-- AppSidebar
+    TrainerDashboardLayout o-- SidebarProvider
+
+    class TrainerIndexPage {
+    }
+    TrainerIndexPage o-- ProfileComponent
+
+    class TrainerUserCategoriesPage {
+    }
+    TrainerUserCategoriesPage *-- "UserCategoryManagementCard"
+    TrainerUserCategoriesPage o-- Input 
+    TrainerUserCategoriesPage ..> UserInfo : "fetches all for search"
+
+    class TrainerTrainingsPage {
+    }
+    TrainerTrainingsPage *-- "TrainerTrainingCard"
+    TrainerTrainingsPage o-- "TrainingManagementDialog"
+    TrainerTrainingsPage ..> Training : "fetches all"
+
+    class TrainerTournamentPage {
+    }
+    TrainerTournamentPage *-- "TrainerTournamentCard"
+    TrainerTournamentPage o-- "TournamentAttendanceDialog"
+    TrainerTournamentPage ..> Tournament : "fetches all"
+
+    class ReportSearchPage {
+    }
+    ReportSearchPage o-- Input
+    ReportSearchPage o-- Table
+    ReportSearchPage ..> UserInfo : "fetches all for search"
+
+    class ReportPageComponent {
+    }
+    ReportPageComponent o-- "UserReportDisplay"
+    ReportPageComponent ..> Report : "fetches by userId"
+  }
+  TrainerDashboardLayout --|> RootRouteComponent : "nested in"
+  TrainerIndexPage --|> TrainerDashboardLayout
+  TrainerUserCategoriesPage --|> TrainerDashboardLayout
+  TrainerTrainingsPage --|> TrainerDashboardLayout
+  TrainerTournamentPage --|> TrainerDashboardLayout
+  ReportSearchPage --|> TrainerDashboardLayout
+  ReportPageComponent --|> TrainerDashboardLayout
+
+  package "Dashboard Admin" {
+    class AdminDashboardLayout {
+    }
+    AdminDashboardLayout o-- AppSidebar
+    AdminDashboardLayout o-- SidebarProvider
+
+    class AdminIndexPage {
+    }
+    AdminIndexPage o-- ProfileComponent
+
+    class AdminUserManagementPage {
+    }
+    AdminUserManagementPage o-- "UsersTable"
+    AdminUserManagementPage o-- "UserEditDialog"
+    AdminUserManagementPage ..> UserInfo : "fetches all"
+
+    class AdminTrainingManagementPage {
+    }
+    AdminTrainingManagementPage *-- "TrainingComponent"
+    AdminTrainingManagementPage o-- "TrainingCreation"
+    AdminTrainingManagementPage ..> Training : "fetches all"
+
+    class AdminTournamentManagementPage {
+    }
+    AdminTournamentManagementPage *-- "TournamentComponent"
+    AdminTournamentManagementPage o-- "TournamentCreation"
+    AdminTournamentManagementPage ..> Tournament : "fetches all"
+
+    class AdminRoleManagementPage {
+    }
+    AdminRoleManagementPage *-- "UserRoleCard"
+    AdminRoleManagementPage ..> UserInfo : "fetches all"
+
+    class AdminRequestsPage {
+    }
+    AdminRequestsPage *-- RequestVisualizer
+    AdminRequestsPage ..> Request : "fetches all"
+
+    class AdminCourtsManagementPage {
+    }
+    AdminCourtsManagementPage *-- "CourtCard"
+    AdminCourtsManagementPage o-- "CourtCreationForm"
+    AdminCourtsManagementPage o-- "CourtReservationsDialog"
+    AdminCourtsManagementPage ..> Court : "fetches all"
+
+    class AdminCategoryUserPage {
+    }
+    AdminCategoryUserPage *-- "AdminUserCategoryCard"
+    AdminCategoryUserPage o-- Input 
+    AdminCategoryUserPage ..> UserInfo : "fetches all for search"
+
+    class AdminCategoryManagementPage {
+    }
+    AdminCategoryManagementPage *-- "CategoryComponent"
+    AdminCategoryManagementPage o-- "CategoryFormDialog"
+    AdminCategoryManagementPage o-- "CategoryRequirementsDialog"
+    AdminCategoryManagementPage ..> Category : "fetches all"
+  }
+  AdminDashboardLayout --|> RootRouteComponent : "nested in"
+  AdminIndexPage --|> AdminDashboardLayout
+  AdminUserManagementPage --|> AdminDashboardLayout
+  AdminTrainingManagementPage --|> AdminDashboardLayout
+  AdminTournamentManagementPage --|> AdminDashboardLayout
+  AdminRoleManagementPage --|> AdminDashboardLayout
+  AdminRequestsPage --|> AdminDashboardLayout
+  AdminCourtsManagementPage --|> AdminDashboardLayout
+  AdminCategoryUserPage --|> AdminDashboardLayout
+  AdminCategoryManagementPage --|> AdminDashboardLayout
+}
+
+package "Specific UI Components (Cards, Rows, Dialogs)" {
+
+  class AdminTournamentDetailsDialog {
+    + tournamentId: Uuid
+  }
+  AdminTournamentDetailsDialog o-- Dialog
+  AdminTournamentDetailsDialog *-- "RegistrationRow"
+  AdminTournamentDetailsDialog *-- "AttendanceRow"
+  AdminTournamentDetailsDialog ..> Tournament : "fetches details"
+  AdminTournamentDetailsDialog ..> TournamentRegistration : "fetches list"
+  AdminTournamentDetailsDialog ..> TournamentAttendance : "fetches list"
+
+  class RegistrationRow {
+    + registration: TournamentRegistration
+    + onDelete: (userId: Uuid) => void
+  }
+  RegistrationRow o-- AlertDialog
+
+  class AttendanceRow {
+    + attendance: TournamentAttendance
+    + onDelete: (userId: Uuid) => void
+  }
+  AttendanceRow o-- AlertDialog
+
+  class AdminTrainingRegistrationRow {
+    + registration: TrainingRegistration
+    + onDelete: (userId: Uuid) => void
+  }
+  AdminTrainingRegistrationRow o-- AlertDialog
+
+  class AdminTrainingRegistrationsDialog {
+    + trainingId: Uuid
+  }
+  AdminTrainingRegistrationsDialog o-- Dialog
+  AdminTrainingRegistrationsDialog *-- AdminTrainingRegistrationRow
+  AdminTrainingRegistrationsDialog ..> Training : "fetches details"
+  AdminTrainingRegistrationsDialog ..> TrainingRegistration : "fetches list"
+
+  class AdminUserCategoryCard {
+    + user: UserInfo
+  }
+  AdminUserCategoryCard o-- Card
+  AdminUserCategoryCard o-- AlertDialog
+  AdminUserCategoryCard ..> UserCategory : "fetches user's"
+  AdminUserCategoryCard ..> Category : "fetches all (for names)"
+
+  class CategoryComponent {
+    + category: Category
+    + onEdit: (category: Category) => void
+    + onViewRequirements: (categoryId: Uuid) => void
+  }
+  CategoryComponent o-- Card
+  CategoryComponent o-- AlertDialog
+
+  class CategoryFormDialog {
+    + categoryToEdit?: Category
+  }
+  CategoryFormDialog o-- Dialog
+  CategoryFormDialog o-- ReusableForm
+  CategoryFormDialog ..> Category : "creates/updates"
+
+  class CategoryRequirementsDialog {
+    + categoryId: Uuid
+    + categoryName: string
+  }
+  CategoryRequirementsDialog o-- Dialog
+  CategoryRequirementsDialog o-- CategorySelector
+  CategoryRequirementsDialog o-- Select
+  CategoryRequirementsDialog ..> CategoryRequirement : "fetches & adds/deletes"
+  CategoryRequirementsDialog ..> Category : "fetches all (for selector & names)"
+
+  class CourtCard {
+    + court: Court
+    + onDelete: (courtId: Uuid) => void
+    + onViewReservations: (court: Court) => void
+  }
+  CourtCard o-- Card
+  CourtCard o-- AlertDialog
+
+  class CourtCreationForm {
+    + onSubmit: (data: {court_name: string}) => void
+  }
+  CourtCreationForm o-- Form
+  CourtCreationForm o-- Input
+
+  class CourtReservationsDialog {
+    + court: Court
+  }
+  CourtReservationsDialog o-- Dialog
+  CourtReservationsDialog o-- Input 
+  CourtReservationsDialog o-- Table
+  CourtReservationsDialog ..> CourtReservation : "fetches list"
+
+  class AttendanceUserRow {
+    + registration: TournamentRegistration
+    + attendance?: TournamentAttendance
+    + onSelectUser: (userId: Uuid) => void
+  }
+
+  class AttendedTournamentCard {
+    + tournament: Tournament
+    + attendance: TournamentAttendance
+  }
+  AttendedTournamentCard o-- Card
+  AttendedTournamentCard o-- EventCourtBadge
+
+  class AvailableTrainingCard {
+    + training: Training
+    + onRegister: (trainingId: Uuid) => void
+  }
+  AvailableTrainingCard o-- Card
+  AvailableTrainingCard o-- EventCourtBadge
+
+  class RegisteredTournamentCard {
+    + tournament: Tournament
+    + registrationDate: string
+  }
+  RegisteredTournamentCard o-- Card
+  RegisteredTournamentCard o-- EventCourtBadge
+
+  class RegisteredTrainingCard {
+    + training: Training
+    + registration: TrainingRegistration
+  }
+  RegisteredTrainingCard o-- Card
+  RegisteredTrainingCard o-- EventCourtBadge
+
+  class TournamentAttendaceDialog {
+    + tournamentId: Uuid
+  }
+  TournamentAttendaceDialog o-- Dialog
+  TournamentAttendaceDialog *-- AttendanceUserRow
+  TournamentAttendaceDialog ..> Tournament : "fetches details"
+  TournamentAttendaceDialog ..> TournamentRegistration : "fetches list"
+  TournamentAttendaceDialog ..> TournamentAttendance : "fetches list & records"
+
+  class TournamentComponent {
+    + tournament: Tournament
+    + enableAdminControls?: boolean
+  }
+  TournamentComponent o-- Card
+  TournamentComponent o-- AlertDialog
+  TournamentComponent o-- "TournamentEdit"
+  TournamentComponent o-- AdminTournamentDetailsDialog
+  TournamentComponent o-- EventCourtBadge
+
+  class TournamentCreation {
+    ' uses TournamentForm via Dialog '
+  }
+  TournamentCreation o-- Dialog
+  TournamentCreation o-- "TournamentForm"
+
+  class TournamentEdit {
+    + tournamentId: Uuid
+  }
+  TournamentEdit o-- Dialog
+  TournamentEdit o-- "TournamentForm"
+  TournamentEdit ..> Tournament : "fetches details & updates"
+
+  class TournamentForm {
+    + initialData?: Tournament
+    + onSubmit: (data: any) => void
+  }
+  TournamentForm o-- Form
+  TournamentForm o-- Input
+  TournamentForm o-- CategorySelector
+  TournamentForm o-- CourtSelector
+
+  class TrainerTournamentCard {
+    + tournament: Tournament
+    + onManageClick: (tournamentId: string) => void
+  }
+  TrainerTournamentCard o-- Card
+  TrainerTournamentCard o-- EventCourtBadge
+
+  class TrainerTrainingCard {
+    + training: Training
+    + onManageClick: (trainingId: Uuid) => void
+  }
+  TrainerTrainingCard o-- Card
+  TrainerTrainingCard o-- EventCourtBadge
+
+  class TrainingComponent {
+    + training: Training
+    + enableAdminControls?: boolean
+  }
+  TrainingComponent o-- Card
+  TrainingComponent o-- AlertDialog
+  TrainingComponent o-- "TrainingEdit"
+  TrainingComponent o-- AdminTrainingRegistrationsDialog
+  TrainingComponent o-- EventCourtBadge
+
+  class TrainingCreation {
+    ' uses TrainingForm via Dialog '
+  }
+  TrainingCreation o-- Dialog
+  TrainingCreation o-- "TrainingForm"
+
+  class TrainingEdit {
+    + trainingId: Uuid
+  }
+  TrainingEdit o-- Dialog
+  TrainingEdit o-- "TrainingForm"
+  TrainingEdit ..> Training : "fetches details & updates"
+
+  class TrainingForm {
+    + initialData?: Training
+    + onSubmit: (data: any) => void
+  }
+  TrainingForm o-- Form
+  TrainingForm o-- Input
+  TrainingForm o-- CategorySelector
+  TrainingForm o-- TrainerSelector
+  TrainingForm o-- CourtSelector
+
+  class TrainingManagementDialog {
+    + trainingId: Uuid
+  }
+  TrainingManagementDialog o-- Dialog
+  TrainingManagementDialog o-- Table
+  TrainingManagementDialog o-- Switch
+  TrainingManagementDialog ..> TrainingRegistration : "fetches list"
+  TrainingManagementDialog ..> Training : "marks attendance" ' (indirectly) '
+
+  class UserCategoryManagementCard {
+    + user: UserInfo
+  }
+  UserCategoryManagementCard o-- Card
+  UserCategoryManagementCard o-- Select
+  UserCategoryManagementCard ..> UserCategory : "fetches & updates level"
+  UserCategoryManagementCard ..> Category : "fetches all (for names)"
+
+  class UserEditDialog {
+    + userId: Uuid
+  }
+  UserEditDialog o-- Dialog
+  UserEditDialog o-- "UserEditForm"
+  UserEditDialog ..> UserInfo : "fetches details & updates"
+
+  class UserEditForm {
+    + initialData?: UserInfo
+    + onSubmit: (data: any) => void
+  }
+  UserEditForm o-- Form
+  UserEditForm o-- Input
+  UserEditForm o-- Select
+
+  class UserReportDisplay {
+    + report: Report
+  }
+  UserReportDisplay *-- Card
+  UserReportDisplay o-- Table
+  UserReportDisplay o-- Badge
+
+  class UserTournamentCard {
+    + tournament: Tournament
+    + onRegister: (tournamentId: Uuid) => void
+  }
+  UserTournamentCard o-- Card
+  UserTournamentCard o-- EventCourtBadge
+
+  class UsersTable {
+    + users: UserInfo[]
+    + onEditUser: (userId: Uuid) => void
+  }
+  UsersTable o-- Table
+  UsersTable o-- Button
+  UsersTable o-- Badge
+
+  class "AvailableCategoryCard" {
+    + category: Category
+    + requirements: CategoryRequirement[]
+    + eligibilityStatus: any
+    + onRegister: (categoryId: Uuid) => void
+  }
+  "AvailableCategoryCard" o-- Card
+  "AvailableCategoryCard" o-- Alert
+  "AvailableCategoryCard" o-- Button
+
+  class "RegisteredCategoryCard" {
+    + category: Category
+    + userLevel: LevelName
+  }
+  "RegisteredCategoryCard" o-- Card
+  "RegisteredCategoryCard" o-- Badge
+
+  class "UserRoleCard" {
+    + user: UserInfo
+  }
+  "UserRoleCard" o-- Card
+  "UserRoleCard" o-- Select
+  "UserRoleCard" o-- Badge
+  "UserRoleCard" ..> UserInfo : "updates role"
+}
+
+' --- Relationships from Pages to Specific UI Components --- '
+' (Many already implied by *-- within the specific UI package) '
+AdminTournamentManagementPage o-- AdminTournamentDetailsDialog
+AdminTrainingManagementPage o-- AdminTrainingRegistrationsDialog
+AdminCategoryManagementPage o-- CategoryComponent
+AdminCategoryManagementPage o-- CategoryFormDialog
+AdminCategoryManagementPage o-- CategoryRequirementsDialog
+
+AdminUserManagementPage o-- UserEditDialog
+
+TrainerTrainingsPage o-- TrainingManagementDialog
+TrainerTournamentPage o-- TournamentAttendaceDialog
+ReportPageComponent o-- UserReportDisplay
+
+' --- General Dependencies --- '
+' Almost all components that make backend calls will implicitly use QueryClient & Toaster '
+' Components with forms use react-hook-form & zod, and shadcn form components '
+' Components that interact with AuthManager are noted with ..> AuthManager '
 
 @enduml

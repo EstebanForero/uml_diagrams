@@ -1,0 +1,23 @@
+@startuml
+title UC_GestionarMatriculaUsuario (Pagar Matrícula): Activity Diagram
+
+start
+:Usuario navega a la página de Matrícula;
+:Sistema verifica si el usuario tiene una matrícula activa;
+if (Matrícula Activa?) then (sí)
+  :Sistema muestra detalles de la matrícula activa (fecha pago, expiración, etc.);
+else (no)
+  :Sistema muestra opciones de planes de pago;
+  :Usuario selecciona un Plan de Pago;
+  :Sistema envía solicitud de pago al Backend API (monto, ID Usuario implícito por token);
+  if (Pago Exitoso en Backend?) then (sí)
+    :Backend API confirma el pago y crea registro de matrícula;
+    :Mostrar mensaje de éxito (Toast);
+    :Actualizar UI para mostrar la nueva matrícula activa;
+  else (no - error en pago)
+    :Backend API retorna error;
+    :Mostrar mensaje de error (Toast);
+  endif
+endif
+stop
+@enduml

@@ -1,0 +1,86 @@
+@startuml
+title UC_GestionarCategoriasCRUDAdmin (Crear/Editar Categoría): Sequence Diagram
+
+actor "Admin" as AdminUser
+participant "CategoryManagementPage" as CatMgmtPage <<(R,orchid)>>
+participant "CategoryComponentCard (existing)" as CatCard <<(C,lightgrey)>>
+participant "CategoryFormDialog" as CatFormDialog <<(C,lightgrey)>>
+participant "ReusableForm (Category)" as CatForm <<(C,lightgrey)>>
+participant "category_backend.ts\ncreateCategory() or updateCategory()" as CatBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+alt Create New Category
+  AdminUser -> CatMgmtPage : Clicks "Add New Category"
+  CatMgmtPage -> CatFormDialog : Opens dialog (isFormOpen=true, categoryToEdit=null)
+  activate CatFormDialog
+  CatFormDialog -> CatForm : Renders empty category form
+  activate CatForm
+  AdminUser -> CatForm : Enters new category details (name, min_age, max_age)
+  AdminUser -> CatForm : Clicks "Create Category"
+  CatForm -> CatFormDialog : onSubmit(values: CategoryCreation)
+  deactivate CatForm
+
+  CatFormDialog -> CatBackend : createCategory(values)
+  activate CatBackend
+  CatBackend -> FetchUtil : fetchJson("/categories", {POST, body: values})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /categories (values)
+  activate API
+  API --> FetchUtil : HTTP 200 OK (message string or void)
+  deactivate API
+  FetchUtil --> CatBackend : (void or success message)
+  CatBackend --> CatFormDialog : (void or success message)
+  deactivate CatBackend
+
+  CatFormDialog -> Toaster : toast.success("Category created...")
+  activate Toaster
+  deactivate Toaster
+else Edit Existing Category
+  AdminUser -> CatCard : Clicks "Edit" on an existing category
+  CatCard -> CatMgmtPage : onEdit(category)
+  CatMgmtPage -> CatFormDialog : Opens dialog (isFormOpen=true, categoryToEdit=category)
+  activate CatFormDialog
+  CatFormDialog -> CatForm : Renders category form, pre-filled with categoryToEdit data
+  activate CatForm
+  AdminUser -> CatForm : Modifies category details
+  AdminUser -> CatForm : Clicks "Save Changes"
+  CatForm -> CatFormDialog : onSubmit(values: CategoryFormData) ' (maps to Category for update) '
+  deactivate CatForm
+
+  CatFormDialog -> CatBackend : updateCategory({id_category, ...values})
+  activate CatBackend
+  CatBackend -> FetchUtil : fetchJson("/categories", {PUT, body: categoryData})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "admin_token_xyz"
+  deactivate AuthMgr
+  FetchUtil -> API : PUT /categories (categoryData)
+  activate API
+  API --> FetchUtil : HTTP 200 OK (updated Category object)
+  deactivate API
+  FetchUtil --> CatBackend : Category (updated)
+  CatBackend --> CatFormDialog : Category (updated)
+  deactivate CatBackend
+
+  CatFormDialog -> Toaster : toast.success("Category updated...")
+  activate Toaster
+  deactivate Toaster
+end
+
+CatFormDialog -> QueryClient : invalidateQueries({queryKey: ['categories']})
+activate QueryClient
+QueryClient -> CatMgmtPage : Triggers refetch of categories list
+deactivate QueryClient
+CatFormDialog -> CatMgmtPage : Closes dialog (onOpenChange(false))
+deactivate CatFormDialog
+deactivate CatMgmtPage
+@enduml

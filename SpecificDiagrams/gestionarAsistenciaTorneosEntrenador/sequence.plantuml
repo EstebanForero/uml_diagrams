@@ -1,0 +1,80 @@
+@startuml
+title UC_GestionarAsistenciaTorneosEntrenador: Sequence Diagram
+
+actor "Entrenador" as Trainer
+participant "TrainerTournamentPageComponent" as TrainerTournamentPage <<(R,orchid)>>
+participant "TrainerTournamentCard" as TrainerTournamentCard <<(C,lightgrey)>>
+participant "TournamentAttendanceDialog" as AttendanceDialog <<(C,lightgrey)>>
+participant "AttendanceUserRow" as UserRow <<(C,lightgrey)>>
+participant "tournament_backend.ts\nrecordTournamentAttendance()" as TournamentBackend <<(F,yellow)>>
+participant "utils.ts\nfetchJson()" as FetchUtil <<(F,orange)>>
+participant "AuthManager" as AuthMgr <<(S,lightblue)>>
+participant "BackendAPI" as API <<(S,tomato)>>
+participant "QueryClient" as QueryClient <<(S,grey)>>
+participant "Toaster" as Toaster <<(C,pink)>>
+
+Trainer -> TrainerTournamentPage : Navigates to /dashboard_trainer/tournament
+activate TrainerTournamentPage
+' ... Initial load of tournaments ... '
+
+Trainer -> TrainerTournamentCard : Clicks "Manage Attendance" for a tournament
+TrainerTournamentCard -> TrainerTournamentPage : onManageClick(tournamentId, tournamentName)
+TrainerTournamentPage -> AttendanceDialog : Opens dialog (isOpen=true, tournamentId)
+activate AttendanceDialog
+
+AttendanceDialog -> QueryClient : useQuery(['tournamentRegistrationsDialog', tournamentId])
+AttendanceDialog -> QueryClient : useQuery(['tournamentAttendanceListDialog', tournamentId])
+' ... Data fetching for dialog ... '
+AttendanceDialog -> UserRow : Renders list of registered users
+
+Trainer -> UserRow : Selects a user to mark attendance
+UserRow -> AttendanceDialog : onSelectUser(userId)
+AttendanceDialog -> AttendanceDialog : Updates selectedUserId, Renders attendance form (input for position)
+
+Trainer -> AttendanceDialog : Enters "Position"
+Trainer -> AttendanceDialog : Clicks "Save Attendance"
+AttendanceDialog -> AttendanceDialog : handleSaveAttendance()
+alt Form data valid (position is a unique positive number)
+  AttendanceDialog -> TournamentBackend : recordTournamentAttendance(tournamentId, {id_user, position})
+  activate TournamentBackend
+  TournamentBackend -> FetchUtil : fetchJson("/tournaments/{id}/attendance", {POST, body})
+  activate FetchUtil
+  FetchUtil -> AuthMgr : getToken()
+  activate AuthMgr
+  AuthMgr --> FetchUtil : "trainer_token_123"
+  deactivate AuthMgr
+  FetchUtil -> API : POST /tournaments/{id}/attendance ({id_user, position})
+  activate API
+  alt Attendance recorded successfully
+    API --> FetchUtil : HTTP 200 OK (TournamentAttendance)
+    FetchUtil --> TournamentBackend : TournamentAttendance
+    TournamentBackend --> AttendanceDialog : TournamentAttendance
+
+    AttendanceDialog -> Toaster : toast.success("Attendance recorded...")
+    activate Toaster
+    deactivate Toaster
+    AttendanceDialog -> QueryClient : invalidateQueries(['tournamentAttendanceListDialog', tournamentId])
+    activate QueryClient
+    deactivate QueryClient
+    AttendanceDialog -> AttendanceDialog : Resets form (selectedUserId=null)
+  else Error recording attendance
+    API --> FetchUtil : HTTP Error
+    FetchUtil -> TournamentBackend : throws Error
+    TournamentBackend --> AttendanceDialog : throws Error
+    AttendanceDialog -> AttendanceDialog : setFormError(error.message)
+    AttendanceDialog -> Toaster : toast.error("Failed to record attendance...")
+    activate Toaster
+    deactivate Toaster
+  end
+  deactivate API
+  deactivate FetchUtil
+  deactivate TournamentBackend
+else Form data invalid
+  AttendanceDialog -> AttendanceDialog : setFormError("Position must be...")
+  AttendanceDialog -> Toaster : toast.error("Check form details.")
+  activate Toaster
+  deactivate Toaster
+end
+deactivate AttendanceDialog
+deactivate TrainerTournamentPage
+@enduml

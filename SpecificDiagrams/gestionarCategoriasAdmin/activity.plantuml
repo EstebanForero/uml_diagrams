@@ -1,0 +1,69 @@
+@startuml
+title UC_GestionarCategoriasCRUDAdmin: Activity Diagram
+
+start
+:Admin navega a Gestión de Categorías;
+:Sistema muestra lista de categorías existentes;
+
+if (¿Qué desea hacer el Admin?) then
+  -->[Crear Categoría]
+    :Admin hace clic en "Añadir Nueva Categoría";
+    :Sistema muestra Formulario de Creación de Categoría;
+    :Admin ingresa datos (nombre, edad_min, edad_max);
+    :Admin envía formulario;
+    :Validar datos (frontend - Zod);
+    if (Datos inválidos?) then (sí)
+      :Mostrar error en formulario;
+    else (no)
+      :Sistema envía datos al Backend API para crear categoría;
+      if (Creación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Actualizar lista de categorías;
+        :Cerrar diálogo;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    endif
+
+elseif (Editar Categoría) then
+    :Admin selecciona una categoría y hace clic en "Editar";
+    :Sistema muestra Formulario de Edición con datos de la categoría;
+    :Admin modifica datos;
+    :Admin envía formulario;
+    :Validar datos (frontend - Zod);
+    if (Datos inválidos?) then (sí)
+      :Mostrar error en formulario;
+    else (no)
+      :Sistema envía datos actualizados al Backend API;
+      if (Actualización Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Actualizar categoría en la lista;
+        :Cerrar diálogo;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    endif
+
+elseif (Eliminar Categoría) then
+    :Admin selecciona una categoría y hace clic en "Eliminar";
+    :Sistema muestra Diálogo de Confirmación;
+    if (Admin confirma eliminación?) then (sí)
+      :Sistema envía solicitud de eliminación al Backend API;
+      if (Eliminación Exitosa?) then (sí)
+        :Mostrar éxito (Toast);
+        :Eliminar categoría de la lista;
+      else (no)
+        :Mostrar error (Toast);
+      endif
+    else (no)
+      :Cancelar eliminación;
+    endif
+
+else (Gestionar Requisitos)
+    :Admin selecciona una categoría y hace clic en "Requisitos";
+    :Ver UC_GestionarCategoriasCRUDAdmin (Añadir Requisito) para el detalle;
+
+endif
+
+stop
+@enduml
